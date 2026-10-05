@@ -1,0 +1,23 @@
+{
+  "rd_grad": "Плевен",
+  "zm_no": "000/2026",
+  "zm_opis": "Първо РУ – Плевен",
+  "dp_no": "0000/2026",
+  "rp_grad": "Плевен",
+  "prokuratura": "",
+  "postanovlenie_no": "000р-0000",
+  "postanovlenie_date": "00.00.2026 г.",
+  "naznachil": "[длъжност и име на назначаващия разследващ полицай]",
+  "expert_name": "[Име на експерта]",
+  "expert_rank": "ИНСПЕКТОР",
+  "_expert_rank_note": "званието над името в таблиците „ЕКСПЕРТ:“ – expert_title от профила, с главни букви",
+  "expert_position": "инспектор в група „ОЦ“ на сектор „ПГ и СД“ при РДПБЗН – Плевен",
+  "expert_education": "Висше",
+  "expert_specialnost": "Пожарна и аварийна безопасност",
+  "predstaven_material": "",
+  "_predstaven_material_note": "остави празно — текстът е общ: Материали по ДП № … по описа на … и ЗМ № … г. по описа на …",
+  "izgotvil_position": "инспектор IV ст.",
+  "izgotvil_date": "00.00.2026 г.",
+  "copies": ["деловодство", "Първо РУ – Плевен"],
+  "literatura": []
+}

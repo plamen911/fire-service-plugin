@@ -1,0 +1,342 @@
+{
+ "source": "Поименно разписание на РДПБЗН – Плевен към 2026-08-31; само звено, длъжност, звание, име",
+ "zvaniya": [
+  {
+   "key": "komisar",
+   "name": "комисар",
+   "short": "комисар",
+   "order": 1
+  },
+  {
+   "key": "glaven_inspektor",
+   "name": "главен инспектор",
+   "short": "гл. инспектор",
+   "order": 2
+  },
+  {
+   "key": "starshi_inspektor",
+   "name": "старши инспектор",
+   "short": "ст. инспектор",
+   "order": 3
+  },
+  {
+   "key": "inspektor",
+   "name": "инспектор",
+   "short": "инспектор",
+   "order": 4
+  },
+  {
+   "key": "mladshi_inspektor",
+   "name": "младши инспектор",
+   "short": "мл. инспектор",
+   "order": 5
+  },
+  {
+   "key": "mladshi_ekspert",
+   "name": "младши експерт",
+   "short": "мл. експерт",
+   "order": 6
+  }
+ ],
+ "dlazhnosti": [
+  {
+   "key": "direktor_na_rdpbzn",
+   "name": "директор на РДПБЗН",
+   "short": "директор на РДПБЗН",
+   "group": "Ръководни",
+   "order": 1
+  },
+  {
+   "key": "nachalnik_na_rspbzn",
+   "name": "началник на РСПБЗН",
+   "short": "началник на РСПБЗН",
+   "group": "Ръководни",
+   "order": 2
+  },
+  {
+   "key": "nachalnik_na_sektor",
+   "name": "началник на сектор",
+   "short": "началник на сектор",
+   "group": "Ръководни",
+   "order": 3
+  },
+  {
+   "key": "nachalnik_na_grupa",
+   "name": "началник на група",
+   "short": "началник на група",
+   "group": "Ръководни",
+   "order": 4
+  },
+  {
+   "key": "nachalnik_na_uchastak",
+   "name": "началник на участък",
+   "short": "началник на участък",
+   "group": "Ръководни",
+   "order": 5
+  },
+  {
+   "key": "inspektor_iv_stepen",
+   "name": "инспектор IV степен",
+   "short": "инспектор IV ст.",
+   "group": "Инспекторски",
+   "order": 6
+  },
+  {
+   "key": "inspektor_v_stepen",
+   "name": "инспектор V степен",
+   "short": "инспектор V ст.",
+   "group": "Инспекторски",
+   "order": 7
+  },
+  {
+   "key": "inspektor_vi_stepen",
+   "name": "инспектор VI степен",
+   "short": "инспектор VI ст.",
+   "group": "Инспекторски",
+   "order": 8
+  },
+  {
+   "key": "inspektor_po_zn_iv_stepen",
+   "name": "инспектор по ЗН IV степен",
+   "short": "инспектор по ЗН IV ст.",
+   "group": "Инспекторски",
+   "order": 9
+  },
+  {
+   "key": "inspektor_po_zn_v_stepen",
+   "name": "инспектор по ЗН V степен",
+   "short": "инспектор по ЗН V ст.",
+   "group": "Инспекторски",
+   "order": 10
+  },
+  {
+   "key": "inspektor_po_zn_vi_stepen",
+   "name": "инспектор по ЗН VI степен",
+   "short": "инспектор по ЗН VI ст.",
+   "group": "Инспекторски",
+   "order": 11
+  },
+  {
+   "key": "nachalnik_na_dezhurna_smyana",
+   "name": "началник на дежурна смяна",
+   "short": "началник ДС",
+   "group": "Оперативен състав",
+   "order": 12
+  },
+  {
+   "key": "komandir_na_ekip",
+   "name": "командир на екип",
+   "short": "командир на екип",
+   "group": "Оперативен състав",
+   "order": 13
+  },
+  {
+   "key": "mladshi_inspektor_i_stepen",
+   "name": "младши инспектор I степен",
+   "short": "мл. инспектор I ст.",
+   "group": "Оперативен състав",
+   "order": 14
+  },
+  {
+   "key": "mladshi_inspektor_ii_stepen",
+   "name": "младши инспектор II степен",
+   "short": "мл. инспектор II ст.",
+   "group": "Оперативен състав",
+   "order": 15
+  },
+  {
+   "key": "mladshi_inspektor_iii_stepen",
+   "name": "младши инспектор III степен",
+   "short": "мл. инспектор III ст.",
+   "group": "Оперативен състав",
+   "order": 16
+  },
+  {
+   "key": "starshi_pozharnikar",
+   "name": "старши пожарникар",
+   "short": "ст. пожарникар",
+   "group": "Оперативен състав",
+   "order": 17
+  },
+  {
+   "key": "pozharnikar",
+   "name": "пожарникар",
+   "short": "пожарникар",
+   "group": "Оперативен състав",
+   "order": 18
+  },
+  {
+   "key": "starshi_spasitel",
+   "name": "старши спасител",
+   "short": "ст. спасител",
+   "group": "Оперативен състав",
+   "order": 19
+  },
+  {
+   "key": "spasitel",
+   "name": "спасител",
+   "short": "спасител",
+   "group": "Оперативен състав",
+   "order": 20
+  },
+  {
+   "key": "vodach_na_spetsialen_avtomobil_i_stepen",
+   "name": "водач на специален автомобил I степен",
+   "short": "водач СА I ст.",
+   "group": "Оперативен състав",
+   "order": 21
+  },
+  {
+   "key": "vodach_na_spetsialen_avtomobil_ii_stepen",
+   "name": "водач на специален автомобил II степен",
+   "short": "водач СА II ст.",
+   "group": "Оперативен състав",
+   "order": 22
+  },
+  {
+   "key": "glaven_ekspert",
+   "name": "главен експерт",
+   "short": "гл. експерт",
+   "group": "Служители",
+   "order": 23
+  },
+  {
+   "key": "glaven_schetovoditel",
+   "name": "главен счетоводител",
+   "short": "гл. счетоводител",
+   "group": "Служители",
+   "order": 24
+  },
+  {
+   "key": "domakin",
+   "name": "домакин",
+   "short": "домакин",
+   "group": "Служители",
+   "order": 25
+  },
+  {
+   "key": "sistemen_operator",
+   "name": "системен оператор",
+   "short": "системен оператор",
+   "group": "Служители",
+   "order": 26
+  },
+  {
+   "key": "tehnicheski_izpalnitel",
+   "name": "технически изпълнител",
+   "short": "технически изпълнител",
+   "group": "Служители",
+   "order": 27
+  },
+  {
+   "key": "otchetnik",
+   "name": "отчетник",
+   "short": "отчетник",
+   "group": "Служители",
+   "order": 28
+  },
+  {
+   "key": "rabotnik",
+   "name": "работник",
+   "short": "работник",
+   "group": "Служители",
+   "order": 29
+  },
+  {
+   "key": "chistach",
+   "name": "чистач",
+   "short": "чистач",
+   "group": "Служители",
+   "order": 30
+  },
+  {
+   "key": "stazhant",
+   "name": "стажант",
+   "short": "стажант",
+   "group": "Служители",
+   "order": 31
+  }
+ ],
+ "unit": [
+  {
+   "key": "rdpbzn_pleven",
+   "name": "РДПБЗН – Плевен",
+   "short": "Плевен",
+   "type": "РДПБЗН",
+   "order": 1,
+   "letterhead": "ПЛЕВЕН"
+  },
+  {
+   "key": "rspbzn_pleven",
+   "name": "РСПБЗН – Плевен",
+   "short": "Плевен",
+   "type": "РСПБЗН",
+   "order": 2,
+   "letterhead": "ПЛЕВЕН"
+  },
+  {
+   "key": "upbzn_dolna_mitropoliya",
+   "name": "УПБЗН – Долна Митрополия",
+   "short": "Долна Митрополия",
+   "type": "УПБЗН",
+   "order": 3,
+   "letterhead": "ПЛЕВЕН"
+  },
+  {
+   "key": "upbzn_storgoziya",
+   "name": "УПБЗН – Сторгозия",
+   "short": "Сторгозия",
+   "type": "УПБЗН",
+   "order": 4,
+   "letterhead": "ПЛЕВЕН"
+  },
+  {
+   "key": "rspbzn_nikopol",
+   "name": "РСПБЗН – Никопол",
+   "short": "Никопол",
+   "type": "РСПБЗН",
+   "order": 5,
+   "letterhead": "НИКОПОЛ"
+  },
+  {
+   "key": "rspbzn_levski",
+   "name": "РСПБЗН – Левски",
+   "short": "Левски",
+   "type": "РСПБЗН",
+   "order": 6,
+   "letterhead": "ЛЕВСКИ"
+  },
+  {
+   "key": "rspbzn_cherven_bryag",
+   "name": "РСПБЗН – Червен бряг",
+   "short": "Червен бряг",
+   "type": "РСПБЗН",
+   "order": 7,
+   "letterhead": "ЧЕРВЕН БРЯГ"
+  },
+  {
+   "key": "rspbzn_knezha",
+   "name": "РСПБЗН – Кнежа",
+   "short": "Кнежа",
+   "type": "РСПБЗН",
+   "order": 8,
+   "letterhead": "КНЕЖА"
+  },
+  {
+   "key": "rspbzn_gulyantsi",
+   "name": "РСПБЗН – Гулянци",
+   "short": "Гулянци",
+   "type": "РСПБЗН",
+   "order": 9,
+   "letterhead": "ГУЛЯНЦИ"
+  },
+  {
+   "key": "rspbzn_belene",
+   "name": "РСПБЗН – Белене",
+   "short": "Белене",
+   "type": "РСПБЗН",
+   "order": 10,
+   "letterhead": "БЕЛЕНЕ"
+  }
+ ]
+}

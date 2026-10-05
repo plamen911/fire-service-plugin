@@ -1,0 +1,13 @@
+# Python зависимости за скриптовете на способността.
+#   pip install -r requirements.txt
+python-docx>=0.8.11        # build_eptz_docx.py — генериране на .docx
+# По избор, за OCR на HEIC снимки от iPhone, ако липсват системните sips/heif-convert:
+pillow>=9.0.0
+pillow-heif>=0.13.0
+#
+# Външни (не-pip) инструменти за ingest_case_folder.py:
+#   poppler-utils   (pdftotext, pdftoppm, pdfinfo)
+#   tesseract-ocr   (+ tesseract-ocr-bul за кирилица)
+#   libheif         (heif-convert) — алтернатива на pillow-heif за HEIC
+# Debian/Ubuntu: apt install poppler-utils tesseract-ocr tesseract-ocr-bul libheif-examples
+# macOS (brew):  brew install poppler tesseract tesseract-lang libheif
