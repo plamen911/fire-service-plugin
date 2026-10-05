@@ -11,6 +11,7 @@ Fire Service: инструментите `keys`, `staff_update` и `samples_save
     python3 tools/admin.py key add "Име Фамилия" --replace  # спира старите му ключове и дава нов
     python3 tools/admin.py key list                         # кой има ключ
     python3 tools/admin.py key revoke "Име Фамилия"         # спира ключовете му
+    python3 tools/admin.py key revoke --id 4                # спира един ключ по номера му от key list
 
 Списък на служителите (основното копие е в n8n)
     python3 tools/admin.py staff get -o staff.csv           # сваля целия списък
@@ -73,7 +74,7 @@ def main():
     p = key.add_parser("add"); p.add_argument("user"); p.add_argument("--replace", action="store_true")
     p.add_argument("--admin", action="store_true", help="ключът е администраторски")
     key.add_parser("list")
-    p = key.add_parser("revoke"); p.add_argument("user")
+    p = key.add_parser("revoke"); p.add_argument("user", nargs="?"); p.add_argument("--id", type=int, help="номерът на ключа от key list")
 
     staff = sub.add_parser("staff").add_subparsers(dest="cmd", required=True)
     p = staff.add_parser("get"); p.add_argument("-o", "--out")
@@ -93,7 +94,9 @@ def main():
         elif a.cmd == "list":
             show(call("admin_url", {"action": "key_list"}))
         else:
-            show(call("admin_url", {"action": "key_revoke", "user": a.user}))
+            if a.id is None and not a.user:
+                sys.exit("дай име или --id НОМЕР (от key list)")
+            show(call("admin_url", {"action": "key_revoke", "id": a.id} if a.id is not None else {"action": "key_revoke", "user": a.user}))
     elif a.area == "staff":
         if a.cmd == "get":
             res = call("staff_url", {})
