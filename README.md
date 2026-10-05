@@ -14,7 +14,7 @@
 Работи и с безплатен акаунт в Claude (claude.ai в браузър, приложението на телефон).
 
 1. **Плъгинът.** Customize → Plugins → Add → Add marketplace → напиши
-   `plamen911/fire-service-plugin` → Sync. Остави включено „Sync automatically“ – така
+   `plamen911/fire-service-skills` → Sync. Остави включено „Sync automatically“ – така
    промените идват сами. В Plugins се появява „Fire service“, а в Skills – седемте скила.
 2. **Изпълнение на код.** Settings → Capabilities → включи „Code execution and file creation“.
 3. **Конекторът с личния ключ.** Customize → Connectors → Add custom connector:
