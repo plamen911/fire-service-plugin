@@ -1,0 +1,18 @@
+{
+  "name": "fire-service-skills",
+  "owner": {
+    "name": "Plamen Markov"
+  },
+  "metadata": {
+    "description": "Claude skills for Bulgarian fire service work — investigation reports, справки, operational reviews and regulatory Q&A.",
+    "version": "2.0.0"
+  },
+  "plugins": [
+    {
+      "name": "fire-service",
+      "source": "./plugins/fire-service",
+      "description": "ЕПТЗ и сметка, справка по чл. 20 ал. 3, удостоверения и придружителни писма, нормативна уредба на ГДПБЗН, райони на действие на звената, търсене и статистика на произшествия, графици за дежурства — общи правила и терминология; данните се четат с личен ключ.",
+      "version": "2.0.0"
+    }
+  ]
+}

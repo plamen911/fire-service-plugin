@@ -1,0 +1,11 @@
+{
+ "url": "https://n8n.fire-expert.uk/webhook/fire-incidents",
+ "staff_url": "https://n8n.fire-expert.uk/webhook/fire-staff",
+ "regs_url": "https://n8n.fire-expert.uk/webhook/fire-regs",
+ "duty_url": "https://n8n.fire-expert.uk/webhook/fire-duty",
+ "samples_url": "https://n8n.fire-expert.uk/webhook/fire-samples",
+ "header": "X-Api-Key",
+ "key": "",
+ "note": "Addresses of the n8n workflow 'Fire Service API (skills)'. There is no key in the package: every person has their own key – in the address of their Fire Service connector, or (for scripts) in the environment variable FIRE_SERVICE_KEY or in a personal skill named fire-service-key. See _shared/scripts/api_config.py.",
+ "admin_url": "https://n8n.fire-expert.uk/webhook/fire-admin"
+}
