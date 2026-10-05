@@ -119,9 +119,15 @@ def request(url_field, body, timeout=60):
 
 
 def post(url_field, body, timeout=60):
-    """POST to an endpoint → parsed JSON. HTTP errors are raised as urllib.error.HTTPError."""
-    with urllib.request.urlopen(request(url_field, body), timeout=timeout) as r:
-        return json.load(r)
+    """POST to an endpoint → parsed JSON. A rejected key ends with KEY_REJECTED; other HTTP errors are raised."""
+    try:
+        with urllib.request.urlopen(request(url_field, body), timeout=timeout) as r:
+            return json.load(r)
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            sys.exit(f"KEY_REJECTED: n8n не приема личния ключ (от {load()['key_source']}) – "
+                     "провери реда `key:` в скила fire-service-key или поискай нов ключ от администратора.")
+        raise
 
 
 if __name__ == "__main__":
