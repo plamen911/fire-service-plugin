@@ -1,0 +1,312 @@
+un,uslovie,malak_izol_m,malak_den_km,malak_nosht_km,golyam_izol_m,golyam_den_km,golyam_nosht_km,tablica3,ime_en
+1005,,30,0.1,0.2,,,,1,"Ammonia, anhydrous; Anhydrous ammonia"
+1008,,30,0.2,0.7,400,2.4,4.7,,"Boron trifluoride; Boron trifluoride, compressed"
+1016,,30,0.1,0.2,200,1.2,3.9,,"Carbon monoxide, compressed"
+1017,,60,0.3,1.5,,,,1,Chlorine
+1026,,30,0.1,0.4,60,0.3,1.1,,Cyanogen
+1040,,30,0.1,0.2,,,,1,Ethylene oxide; Ethylene oxide with nitrogen
+1045,,30,0.1,0.2,100,0.5,2.3,,"Fluorine, compressed"
+1048,,30,0.1,0.2,150,1.0,3.2,,"Hydrogen bromide, anhydrous"
+1050,,30,0.1,0.3,,,,1,"Hydrogen chloride, anhydrous"
+1051,,60,0.2,0.7,200,0.7,1.8,,"Hydrogen cyanide, stabilized"
+1052,,30,0.1,0.5,,,,1,"Hydrogen fluoride, anhydrous"
+1053,,30,0.1,0.5,400,2.4,6.3,,Hydrogen sulfide; Hydrogen sulphide
+1061,,30,0.1,0.2,200,0.6,2.1,,"Methylamine, anhydrous"
+1062,,30,0.1,0.1,150,0.3,0.7,,Methyl bromide
+1064,,30,0.1,0.3,200,1.3,3.9,,Methyl mercaptan
+1067,,30,0.1,0.4,400,1.4,3.3,,Dinitrogen tetroxide; Nitrogen dioxide
+1069,,30,0.2,1.0,800,4.3,9.6,,Nitrosyl chloride
+1076,,100,0.6,2.5,500,3.0,9.5,,Phosgene
+1079,,100,0.6,2.6,,,,1,Sulfur dioxide; Sulphur dioxide
+1082,,30,0.1,0.1,60,0.4,0.7,,"Refrigerant gas R-1113; Trifluorochloroethylene, stabilized"
+1092,,100,1.3,3.5,600,6.8,11.1,,"Acrolein, stabilized"
+1093,,30,0.2,0.6,100,1.3,2.3,,"Acrylonitrile, stabilized"
+1098,,30,0.2,0.3,60,0.8,1.2,,Allyl alcohol
+1135,,30,0.1,0.1,30,0.1,0.1,,Ethylene chlorohydrin
+1143,,30,0.1,0.2,60,0.5,0.7,,"Crotonaldehyde; Crotonaldehyde, stabilized"
+1162,voda,30,0.1,0.1,30,0.4,1.2,,Dimethyldichlorosilane
+1163,,30,0.2,0.5,100,1.0,1.8,,"Dimethylhydrazine, unsymmetrical"
+1182,,30,0.2,0.3,60,0.6,0.9,,Ethyl chloroformate
+1183,voda,30,0.1,0.1,60,0.5,1.5,,Ethyldichlorosilane
+1185,,30,0.2,0.5,200,1.0,1.8,,"Ethyleneimine, stabilized"
+1196,voda,30,0.1,0.5,150,1.8,3.7,,Ethyltrichlorosilane
+1238,,30,0.2,0.5,150,1.2,2.2,,Methyl chloroformate
+1239,,60,0.5,1.5,300,3.4,5.7,,Methyl chloromethyl ether
+1242,voda,30,0.1,0.1,60,0.5,1.7,,Methyldichlorosilane
+1244,,30,0.3,0.6,150,1.5,2.2,,Methylhydrazine
+1250,voda,30,0.1,0.1,60,0.6,1.9,,Methyltrichlorosilane
+1251,,100,0.3,0.7,800,1.7,2.8,,"Methyl vinyl ketone, stabilized"
+1259,,100,1.4,5.2,1000,11.0+,11.0+,,Nickel carbonyl
+1295,voda,30,0.1,0.1,60,0.5,1.5,,Trichlorosilane
+1298,voda,30,0.1,0.1,30,0.4,1.0,,Trimethylchlorosilane
+1305,voda,30,0.1,0.1,30,0.4,1.3,,Vinyltrichlorosilane
+1340,voda,30,0.1,0.1,30,0.2,1.0,,"Phosphorus pentasulfide, free from yellow and white phosphorus; Phosphorus pentasulphide, free from yellow and white phosphorus"
+1360,voda,30,0.1,0.4,200,0.8,2.7,,Calcium phosphide
+1380,,60,0.6,2.0,300,3.0,6.5,,Pentaborane
+1384,voda,30,0.1,0.4,60,0.5,2.1,,Sodium dithionite; Sodium hydrosulfite; Sodium hydrosulphite
+1390,voda,30,0.1,0.3,60,0.5,1.8,,Alkali metal amides
+1397,voda,30,0.1,0.7,400,1.6,4.7,,Aluminum phosphide
+1419,voda,30,0.1,0.6,400,1.4,4.1,,Magnesium aluminum phosphide
+1432,voda,30,0.1,0.4,300,1.0,3.0,,Sodium phosphide
+1510,,30,0.2,0.3,30,0.4,0.7,,Tetranitromethane
+1541,voda,30,0.1,0.1,60,0.2,0.5,,"Acetone cyanohydrin, stabilized"
+1556,,150,1.4,2.2,300,4.0,5.8,,Methyldichloroarsine
+1560,,30,0.2,0.3,100,1.0,1.5,,Arsenic chloride; Arsenic trichloride
+1569,,30,0.4,1.2,150,1.8,3.3,,Bromoacetone
+1580,,60,0.5,1.2,200,2.4,3.7,,Chloropicrin
+1581,,30,0.1,0.6,300,2.1,5.9,,Chloropicrin and methyl bromide mixture
+1582,,30,0.1,0.5,60,0.5,2.1,,Chloropicrin and methyl chloride mixture
+1583,,30,0.1,0.6,300,2.1,5.9,,"Chloropicrin mixture, n.o.s."
+1589,,300,1.9,6.6,1000,11.0+,11.0+,,"Cyanogen chloride, stabilized"
+1595,,30,0.1,0.1,60,0.2,0.7,,Dimethyl sulfate; Dimethyl sulphate
+1605,,30,0.1,0.1,30,0.1,0.2,,Ethylene dibromide
+1612,,100,0.8,2.7,400,3.5,8.1,,Hexaethyl tetraphosphate and compressed gas mixture
+1613,,30,0.1,0.1,100,0.5,1.1,,"Hydrocyanic acid, aqueous solution, with not more than 20% hydrogen cyanide; Hydrogen cyanide, aqueous solution, with not more than 20% hydrogen cyanide"
+1614,,60,0.2,0.6,150,0.5,1.5,,"Hydrogen cyanide, stabilized (absorbed)"
+1647,,30,0.1,0.1,150,0.3,0.7,,"Methyl bromide and ethylene dibromide mixture, liquid"
+1660,,30,0.1,0.6,100,0.6,2.2,,"Nitric oxide, compressed"
+1670,,30,0.3,0.4,100,0.8,1.3,,Perchloromethyl mercaptan
+1672,,30,0.2,0.2,60,0.5,0.7,,Phenylcarbylamine chloride
+1680,voda,30,0.1,0.1,60,0.2,0.7,,"Potassium cyanide, solid"
+1689,voda,30,0.1,0.1,60,0.2,0.9,,"Sodium cyanide, solid"
+1695,,30,0.1,0.2,60,0.4,0.6,,"Chloroacetone, stabilized"
+1716,voda,30,0.1,0.1,30,0.2,0.7,,Acetyl bromide
+1717,voda,30,0.1,0.1,60,0.7,2.0,,Acetyl chloride
+1722,,100,0.3,0.8,400,1.5,2.4,,Allyl chlorocarbonate; Allyl chloroformate
+1724,voda,30,0.1,0.1,30,0.4,1.2,,"Allyltrichlorosilane, stabilized"
+1725,voda,30,0.1,0.1,30,0.1,0.2,,"Aluminum bromide, anhydrous"
+1726,voda,30,0.1,0.1,30,0.4,1.5,,"Aluminum chloride, anhydrous"
+1728,voda,30,0.1,0.1,30,0.4,1.2,,Amyltrichlorosilane
+1732,voda,30,0.1,0.3,100,0.8,3.0,,Antimony pentafluoride
+1741,susha,30,0.1,0.3,100,0.6,1.3,,Boron trichloride
+1741,voda,30,0.1,0.2,100,0.9,2.8,,Boron trichloride
+1744,,60,0.8,2.4,400,4.2,7.6,,"Bromine; Bromine, solution; Bromine, solution (Inhalation Hazard Zone A)"
+1744,,30,0.1,0.2,30,0.4,0.5,,"Bromine, solution (Inhalation Hazard Zone B)"
+1745,susha,100,0.9,2.7,500,5.7,10.8,,Bromine pentafluoride
+1745,voda,30,0.1,0.3,100,0.9,3.0,,Bromine pentafluoride
+1746,susha,30,0.1,0.2,30,0.3,0.5,,Bromine trifluoride
+1746,voda,30,0.1,0.3,100,0.8,2.8,,Bromine trifluoride
+1747,voda,30,0.1,0.1,30,0.4,1.2,,Butyltrichlorosilane
+1749,,30,0.2,1.1,300,1.4,3.7,,Chlorine trifluoride
+1752,susha,30,0.3,0.6,100,1.2,1.9,,Chloroacetyl chloride
+1752,voda,30,0.1,0.1,30,0.1,0.4,,Chloroacetyl chloride
+1753,voda,30,0.1,0.1,30,0.2,0.5,,Chlorophenyltrichlorosilane
+1754,susha,30,0.1,0.1,30,0.3,0.3,,Chlorosulfonic acid (with or without sulfur trioxide); Chlorosulphonic acid (with or without sulphur trioxide)
+1754,voda,30,0.1,0.1,60,0.5,1.7,,Chlorosulfonic acid (with or without sulfur trioxide); Chlorosulphonic acid (with or without sulphur trioxide)
+1758,voda,30,0.1,0.1,30,0.1,0.3,,Chromium oxychloride
+1762,voda,30,0.1,0.1,30,0.2,0.8,,Cyclohexenyltrichlorosilane
+1763,voda,30,0.1,0.1,30,0.2,0.8,,Cyclohexyltrichlorosilane
+1765,voda,30,0.1,0.1,30,0.1,0.5,,Dichloroacetyl chloride
+1766,voda,30,0.1,0.1,30,0.4,1.4,,Dichlorophenyltrichlorosilane
+1767,voda,30,0.1,0.1,30,0.2,0.6,,Diethyldichlorosilane
+1769,voda,30,0.1,0.1,30,0.2,0.7,,Diphenyldichlorosilane
+1771,voda,30,0.1,0.1,30,0.3,0.8,,Dodecyltrichlorosilane
+1777,voda,30,0.1,0.1,30,0.1,0.3,,Fluorosulfonic acid; Fluorosulphonic acid
+1781,voda,30,0.1,0.1,30,0.1,0.3,,Hexadecyltrichlorosilane
+1784,voda,30,0.1,0.1,30,0.3,0.9,,Hexyltrichlorosilane
+1799,voda,30,0.1,0.1,30,0.3,1.0,,Nonyltrichlorosilane
+1800,voda,30,0.1,0.1,30,0.3,0.9,,Octadecyltrichlorosilane
+1801,voda,30,0.1,0.1,30,0.3,1.0,,Octyltrichlorosilane
+1804,voda,30,0.1,0.1,30,0.3,1.0,,Phenyltrichlorosilane
+1806,voda,30,0.1,0.1,30,0.2,0.9,,Phosphorus pentachloride
+1808,voda,30,0.1,0.1,30,0.3,1.1,,Phosphorus tribromide
+1809,susha,30,0.2,0.6,100,1.1,2.0,,Phosphorus trichloride
+1809,voda,30,0.1,0.1,60,0.5,1.8,,Phosphorus trichloride
+1810,susha,30,0.3,0.6,100,1.1,1.8,,Phosphorus oxychloride
+1810,voda,30,0.1,0.1,60,0.5,1.5,,Phosphorus oxychloride
+1815,voda,30,0.1,0.1,30,0.1,0.3,,Propionyl chloride
+1816,voda,30,0.1,0.1,30,0.4,1.3,,Propyltrichlorosilane
+1818,voda,30,0.1,0.1,60,0.6,2.0,,Silicon tetrachloride
+1828,susha,30,0.1,0.1,60,0.3,0.4,,Sulfur chlorides; Sulphur chlorides
+1828,voda,30,0.1,0.1,30,0.2,0.7,,Sulfur chlorides; Sulphur chlorides
+1829,,60,0.4,1.0,300,2.9,6.3,,"Sulfur trioxide, stabilized; Sulphur trioxide, stabilized"
+1831,,60,0.4,1.0,300,2.9,6.3,,"Sulfuric acid, fuming; Sulphuric acid, fuming"
+1834,susha,30,0.2,0.4,60,0.8,1.5,,Sulfuryl chloride; Sulphuryl chloride
+1834,voda,30,0.1,0.1,30,0.3,1.1,,Sulfuryl chloride; Sulphuryl chloride
+1836,susha,30,0.1,0.2,30,0.3,0.5,,Thionyl chloride
+1836,voda,100,0.9,2.9,600,7.6,11.0+,,Thionyl chloride
+1838,susha,30,0.1,0.2,30,0.4,0.5,,Titanium tetrachloride
+1838,voda,30,0.1,0.1,30,0.3,1.2,,Titanium tetrachloride
+1859,,30,0.2,0.8,100,0.5,1.8,,"Silicon tetrafluoride; Silicon tetrafluoride, compressed"
+1892,,150,1.5,2.2,400,5.1,6.4,,Ethyldichloroarsine
+1898,voda,30,0.1,0.1,30,0.3,0.9,,Acetyl iodide
+1911,,60,0.3,1.2,300,1.6,4.6,,Diborane; Diborane mixtures
+1923,voda,30,0.1,0.4,60,0.5,2.1,,Calcium dithionite; Calcium hydrosulfite; Calcium hydrosulphite
+1929,voda,30,0.1,0.4,60,0.5,1.9,,Potassium dithionite; Potassium hydrosulfite; Potassium hydrosulphite
+1931,voda,30,0.1,0.4,60,0.5,1.9,,Zinc dithionite; Zinc hydrosulfite; Zinc hydrosulphite
+1953,,150,1.0,3.9,1000,6.2,10.5,,"Compressed gas, poisonous, flammable, n.o.s.; Compressed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone A); Compressed gas, toxic, flammable, n.o.s.; Compressed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone A)"
+1953,,30,0.1,0.4,300,1.4,3.1,,"Compressed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone B); Compressed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone B)"
+1953,,30,0.1,0.3,150,1.0,2.7,,"Compressed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone C); Compressed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone D); Compressed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone C); Compressed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone D)"
+1955,,150,1.0,3.9,1000,6.2,10.5,,"Compressed gas, poisonous, n.o.s.; Compressed gas, poisonous, n.o.s. (Inhalation Hazard Zone A); Compressed gas, toxic, n.o.s.; Compressed gas, toxic, n.o.s. (Inhalation Hazard Zone A)"
+1955,,30,0.2,1.1,300,1.4,3.7,,"Compressed gas, poisonous, n.o.s. (Inhalation Hazard Zone B); Compressed gas, toxic, n.o.s. (Inhalation Hazard Zone B)"
+1955,,30,0.1,0.3,150,1.0,2.7,,"Compressed gas, poisonous, n.o.s. (Inhalation Hazard Zone C); Compressed gas, poisonous, n.o.s. (Inhalation Hazard Zone D); Compressed gas, toxic, n.o.s. (Inhalation Hazard Zone C); Compressed gas, toxic, n.o.s. (Inhalation Hazard Zone D)"
+1955,,100,1.0,3.4,500,4.4,9.6,,Organic phosphate compound mixed with compressed gas; Organic phosphate mixed with compressed gas; Organic phosphorus compound mixed with compressed gas
+1967,,100,1.0,3.4,500,4.4,9.6,,"Insecticide gas, poisonous, n.o.s.; Insecticide gas, toxic, n.o.s.; Parathion and compressed gas mixture"
+1975,,30,0.1,0.6,100,0.6,2.2,,Nitric oxide and dinitrogen tetroxide mixture; Nitric oxide and nitrogen dioxide mixture
+1994,,100,0.9,2.1,400,5.2,7.8,,Iron pentacarbonyl
+2004,voda,30,0.1,0.3,60,0.5,1.8,,Magnesium diamide
+2011,voda,30,0.1,0.6,400,1.4,3.9,,Magnesium phosphide
+2012,voda,30,0.1,0.3,200,0.9,2.8,,Potassium phosphide
+2013,voda,30,0.1,0.3,200,0.8,2.7,,Strontium phosphide
+2032,,30,0.1,0.1,150,0.3,0.5,,"Nitric acid, red fuming"
+2186,,30,0.1,0.3,,,,1,"Hydrogen chloride, refrigerated liquid"
+2188,,150,1.0,3.9,1000,6.2,10.5,,Arsine
+2189,,30,0.1,0.4,300,1.4,3.1,,Dichlorosilane
+2190,,300,1.8,7.2,1000,11.0+,11.0+,,"Oxygen difluoride, compressed"
+2191,,30,0.1,0.5,400,2.2,5.0,,Sulfuryl fluoride; Sulphuryl fluoride
+2192,,150,0.9,3.3,600,3.6,7.4,,Germane
+2194,,200,1.1,3.4,600,3.9,7.6,,Selenium hexafluoride
+2195,,1000,5.9,11.1,1000,11.0+,11.0+,,Tellurium hexafluoride
+2196,,30,0.2,0.8,150,0.8,2.8,,Tungsten hexafluoride
+2197,,30,0.1,0.3,150,1.0,2.7,,"Hydrogen iodide, anhydrous"
+2198,,30,0.2,1.0,200,1.1,3.5,,"Phosphorus pentafluoride; Phosphorus pentafluoride, compressed"
+2199,,60,0.3,1.1,400,1.3,3.7,,Phosphine
+2202,,300,1.7,6.0,1000,11.0+,11.0+,,"Hydrogen selenide, anhydrous"
+2204,,30,0.1,0.3,300,1.5,3.6,,Carbonyl sulfide; Carbonyl sulphide
+2232,,30,0.2,0.3,60,0.7,1.1,,Chloroacetaldehyde; 2-Chloroethanal
+2285,,30,0.2,0.2,60,0.5,0.6,,Isocyanatobenzotrifluorides
+2308,voda,30,0.1,0.3,300,0.8,2.3,,"Nitrosylsulfuric acid, liquid; Nitrosylsulphuric acid, liquid"
+2334,,30,0.2,0.5,150,1.6,2.5,,Allylamine
+2337,,30,0.1,0.1,30,0.3,0.4,,Phenyl mercaptan
+2353,voda,30,0.1,0.1,30,0.2,0.5,,Butyryl chloride
+2382,,30,0.2,0.3,60,0.8,1.3,,"Dimethylhydrazine, symmetrical"
+2395,voda,30,0.1,0.1,30,0.1,0.3,,Isobutyryl chloride
+2407,,30,0.1,0.2,60,0.5,0.9,,Isopropyl chloroformate
+2417,,100,0.7,2.5,600,3.8,8.2,,Carbonyl fluoride
+2418,,100,0.5,2.4,400,2.4,5.9,,Sulfur tetrafluoride; Sulphur tetrafluoride
+2420,,100,0.7,2.7,1000,11.0+,11.0+,,Hexafluoroacetone
+2421,,60,0.3,1.2,200,1.4,4.3,,Nitrogen trioxide
+2434,voda,30,0.1,0.1,30,0.1,0.3,,Dibenzyldichlorosilane
+2435,voda,30,0.1,0.1,30,0.2,0.6,,Ethylphenyldichlorosilane
+2437,voda,30,0.1,0.1,30,0.2,0.8,,Methylphenyldichlorosilane
+2438,,60,0.5,1.0,200,2.3,3.3,,Trimethylacetyl chloride
+2442,,30,0.2,0.3,60,0.7,1.1,,Trichloroacetyl chloride
+2474,,60,0.6,1.8,200,2.3,4.2,,Thiophosgene
+2477,,30,0.1,0.1,30,0.3,0.4,,Methyl isothiocyanate
+2478,,60,0.8,1.8,400,4.7,7.0,,"Isocyanate solution, flammable, poisonous, n.o.s.; Isocyanate solution, flammable, toxic, n.o.s.; Isocyanates, flammable, poisonous, n.o.s.; Isocyanates, flammable, toxic, n.o.s."
+2480,,150,1.7,5.2,1000,11.0+,11.0+,,Methyl isocyanate
+2481,,150,2.0,5.3,1000,11.0+,11.0+,,Ethyl isocyanate
+2482,,100,1.3,2.8,600,7.8,10.7,,n-Propyl isocyanate
+2483,,150,1.5,3.3,1000,11.0+,11.0+,,Isopropyl isocyanate
+2484,,60,0.8,1.8,400,4.7,7.0,,tert-Butyl isocyanate
+2485,,60,0.6,1.2,300,2.9,4.2,,n-Butyl isocyanate
+2486,,60,0.6,1.3,300,3.4,4.8,,Isobutyl isocyanate
+2487,,100,0.9,1.5,400,4.2,5.4,,Phenyl isocyanate
+2488,,30,0.3,0.4,100,1.1,1.4,,Cyclohexyl isocyanate
+2495,voda,30,0.1,0.3,100,0.9,3.2,,Iodine pentafluoride
+2521,,30,0.2,0.3,60,0.7,1.0,,"Diketene, stabilized"
+2534,,30,0.1,0.3,150,0.8,1.8,,Methylchlorosilane
+2548,,100,0.5,2.5,800,5.1,11.0+,,Chlorine pentafluoride
+2605,,30,0.2,0.2,60,0.7,0.9,,Methoxymethyl isocyanate
+2606,,30,0.2,0.3,60,0.7,1.1,,Methyl orthosilicate
+2644,,30,0.1,0.2,100,0.3,0.7,,Methyl iodide
+2646,,30,0.1,0.1,30,0.3,0.3,,Hexachlorocyclopentadiene
+2668,,30,0.1,0.1,30,0.3,0.4,,Chloroacetonitrile
+2676,,60,0.3,1.6,200,1.3,4.1,,Stibine
+2691,voda,30,0.1,0.1,30,0.1,0.4,,Phosphorus pentabromide
+2692,susha,30,0.1,0.2,30,0.2,0.4,,Boron tribromide
+2692,voda,30,0.1,0.1,30,0.4,1.4,,Boron tribromide
+2740,,30,0.1,0.3,60,0.6,1.0,,n-Propyl chloroformate
+2742,,30,0.2,0.2,60,0.5,0.7,,"Chloroformates, poisonous, corrosive, flammable, n.o.s.; Chloroformates, toxic, corrosive, flammable, n.o.s."
+2743,,30,0.1,0.1,30,0.3,0.4,,n-Butyl chloroformate
+2806,voda,30,0.1,0.2,60,0.4,1.6,,Lithium nitride
+2826,,30,0.2,0.2,60,0.5,0.7,,Ethyl chlorothioformate
+2845,,30,0.3,0.7,100,1.4,2.3,,"Ethyl phosphonous dichloride, anhydrous"
+2845,,30,0.4,1.2,200,2.6,4.2,,Methyl phosphonous dichloride
+2901,,100,0.5,1.8,1000,5.7,11.0+,,Bromine chloride
+2927,,30,0.1,0.1,30,0.2,0.2,,"Ethyl phosphonothioic dichloride, anhydrous"
+2927,,30,0.1,0.1,30,0.3,0.3,,Ethyl phosphorodichloridate
+2965,voda,30,0.1,0.2,100,0.9,2.8,,Boron trifluoride dimethyl etherate
+2977,voda,30,0.1,0.2,30,0.4,1.6,,"Radioactive material, uranium hexafluoride, fissile; Uranium hexafluoride, radioactive material, fissile"
+2978,voda,30,0.1,0.2,30,0.4,1.6,,"Radioactive material, uranium hexafluoride, non fissile or fissile-excepted; Uranium hexafluoride, radioactive material, non fissile or fissile-excepted"
+2985,voda,30,0.1,0.2,60,0.5,1.6,,"Chlorosilanes, flammable, corrosive, n.o.s."
+2986,voda,30,0.1,0.2,60,0.5,1.6,,"Chlorosilanes, corrosive, flammable, n.o.s."
+2987,voda,30,0.1,0.2,60,0.5,1.6,,"Chlorosilanes, corrosive, n.o.s."
+2988,voda,30,0.1,0.2,60,0.5,1.6,,"Chlorosilanes, water-reactive, flammable, corrosive, n.o.s."
+3023,,30,0.2,0.2,60,0.6,0.8,,2-Methyl-2-heptanethiol
+3048,voda,30,0.1,0.7,400,1.6,4.5,,Aluminum phosphide pesticide
+3057,,30,0.2,0.9,800,4.9,11.0+,,Trifluoroacetyl chloride
+3079,,30,0.3,0.7,150,1.7,2.8,,"Methacrylonitrile, stabilized"
+3083,,30,0.2,1.1,1000,5.5,10.9,,Perchloryl fluoride
+3160,,150,1.0,3.9,1000,6.2,10.5,,"Liquefied gas, poisonous, flammable, n.o.s.; Liquefied gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone A); Liquefied gas, toxic, flammable, n.o.s.; Liquefied gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone A)"
+3160,,30,0.1,0.4,300,1.4,3.1,,"Liquefied gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone B); Liquefied gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone B)"
+3160,,30,0.1,0.3,150,1.0,2.7,,"Liquefied gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone D); Liquefied gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone D)"
+3162,,150,1.0,3.9,1000,6.2,10.5,,"Liquefied gas, poisonous, n.o.s.; Liquefied gas, poisonous, n.o.s. (Inhalation Hazard Zone A); Liquefied gas, toxic, n.o.s.; Liquefied gas, toxic, n.o.s. (Inhalation Hazard Zone A)"
+3162,,30,0.2,1.1,300,1.4,3.7,,"Liquefied gas, poisonous, n.o.s. (Inhalation Hazard Zone B); Liquefied gas, toxic, n.o.s. (Inhalation Hazard Zone B)"
+3162,,30,0.1,0.3,150,1.0,2.7,,"Liquefied gas, poisonous, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, poisonous, n.o.s. (Inhalation Hazard Zone D); Liquefied gas, toxic, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, toxic, n.o.s. (Inhalation Hazard Zone D)"
+3246,,30,0.2,0.3,60,0.7,1.0,,Methanesulfonyl chloride; Methanesulphonyl chloride
+3275,,30,0.3,0.7,150,1.7,2.8,,"Nitriles, poisonous, flammable, n.o.s.; Nitriles, toxic, flammable, n.o.s."
+3276,,30,0.3,0.7,150,1.7,2.8,,"Nitriles, liquid, poisonous, n.o.s.; Nitriles, liquid, toxic, n.o.s.; Nitriles, poisonous, liquid, n.o.s.; Nitriles, toxic, liquid, n.o.s."
+3278,,30,0.4,1.2,200,2.6,4.2,,"Organophosphorus compound, liquid, poisonous, n.o.s.; Organophosphorus compound, liquid, toxic, n.o.s."
+3279,,30,0.4,1.2,200,2.6,4.2,,"Organophosphorus compound, poisonous, flammable, n.o.s.; Organophosphorus compound, toxic, flammable, n.o.s."
+3280,,30,0.2,0.7,150,1.7,3.6,,"Organoarsenic compound, liquid, n.o.s."
+3281,,100,1.4,5.2,1000,11.0+,11.0+,,"Metal carbonyls, liquid, n.o.s."
+3294,,30,0.1,0.2,150,0.7,2.0,,"Hydrogen cyanide, solution in alcohol, with not more than 45% hydrogen cyanide"
+3300,,30,0.1,0.2,150,0.7,2.0,,"Ethylene oxide and carbon dioxide mixture, with more than 87% ethylene oxide"
+3303,,100,0.5,2.5,800,5.1,11.0+,,"Compressed gas, poisonous, oxidizing, n.o.s.; Compressed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone A); Compressed gas, toxic, oxidizing, n.o.s.; Compressed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone A)"
+3303,,30,0.2,1.1,500,3.5,9.9,,"Compressed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone B); Compressed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone B)"
+3303,,30,0.1,0.6,100,0.6,2.2,,"Compressed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone C); Compressed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone D); Compressed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone C); Compressed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone D)"
+3304,,200,1.1,3.4,600,3.9,7.6,,"Compressed gas, poisonous, corrosive, n.o.s.; Compressed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone A); Compressed gas, toxic, corrosive, n.o.s.; Compressed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3304,,30,0.2,1.1,300,1.6,3.7,,"Compressed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone B); Compressed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3304,,30,0.1,0.5,300,1.4,3.2,,"Compressed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone C); Compressed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone C)"
+3304,,30,0.1,0.2,150,0.8,2.0,,"Compressed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone D); Compressed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3305,,150,1.0,3.9,1000,6.2,10.5,,"Compressed gas, poisonous, flammable, corrosive, n.o.s.; Compressed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A); Compressed gas, toxic, flammable, corrosive, n.o.s.; Compressed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3305,,30,0.1,0.4,300,1.4,3.1,,"Compressed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B); Compressed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3305,,30,0.1,0.3,150,1.0,2.7,,"Compressed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone C); Compressed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone D); Compressed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone C); Compressed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3306,,100,0.5,2.5,1000,5.5,11.0+,,"Compressed gas, poisonous, oxidizing, corrosive, n.o.s.; Compressed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone A); Compressed gas, toxic, oxidizing, corrosive, n.o.s.; Compressed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3306,,30,0.2,1.1,800,5.1,10.9,,"Compressed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone B); Compressed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3306,,30,0.1,0.5,300,1.6,3.2,,"Compressed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone C); Compressed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone C)"
+3306,,30,0.1,0.2,150,0.8,2.0,,"Compressed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone D); Compressed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3307,,100,0.5,2.5,800,5.1,11.0+,,"Liquefied gas, poisonous, oxidizing, n.o.s.; Liquefied gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone A); Liquefied gas, toxic, oxidizing, n.o.s.; Liquefied gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone A)"
+3307,,30,0.2,1.1,500,2.8,10.9,,"Liquefied gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone B); Liquefied gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone B)"
+3307,,30,0.1,0.6,100,0.6,2.2,,"Liquefied gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone D); Liquefied gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone D)"
+3308,,200,1.1,3.4,600,3.9,7.6,,"Liquefied gas, poisonous, corrosive, n.o.s.; Liquefied gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone A); Liquefied gas, toxic, corrosive, n.o.s.; Liquefied gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3308,,30,0.3,1.1,300,1.6,3.7,,"Liquefied gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone B); Liquefied gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3308,,30,0.1,0.5,300,1.4,3.2,,"Liquefied gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone C)"
+3308,,30,0.1,0.2,150,0.8,2.0,,"Liquefied gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone D); Liquefied gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3309,,150,1.0,3.9,1000,6.2,10.5,,"Liquefied gas, poisonous, flammable, corrosive, n.o.s.; Liquefied gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A); Liquefied gas, toxic, flammable, corrosive, n.o.s.; Liquefied gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3309,,30,0.3,0.6,300,2.5,3.1,,"Liquefied gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B); Liquefied gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3309,,30,0.1,0.3,150,1.0,2.7,,"Liquefied gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone D); Liquefied gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3310,,100,0.5,2.5,1000,5.1,11.0+,,"Liquefied gas, poisonous, oxidizing, corrosive, n.o.s.; Liquefied gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone A); Liquefied gas, toxic, oxidizing, corrosive, n.o.s.; Liquefied gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3310,,30,0.2,1.1,800,4.5,10.9,,"Liquefied gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone B); Liquefied gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3310,,30,0.1,0.5,300,1.6,3.2,,"Liquefied gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone C); Liquefied gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone C)"
+3310,,30,0.1,0.2,150,0.8,2.0,,"Liquefied gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone D); Liquefied gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3318,,30,0.1,0.2,150,0.8,2.0,,"Ammonia solution, with more than 50% ammonia"
+3355,,150,1.0,3.9,1000,6.2,10.5,,"Insecticide gas, poisonous, flammable, n.o.s.; Insecticide gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone A); Insecticide gas, toxic, flammable, n.o.s.; Insecticide gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone A)"
+3355,,30,0.1,0.4,300,1.4,3.1,,"Insecticide gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone B); Insecticide gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone B)"
+3355,,30,0.1,0.3,150,1.0,2.7,,"Insecticide gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone C); Insecticide gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone C)"
+3355,,30,0.1,0.3,150,0.6,1.6,,"Insecticide gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone D); Insecticide gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone D)"
+3361,voda,30,0.1,0.2,60,0.5,1.6,,"Chlorosilanes, poisonous, corrosive, n.o.s.; Chlorosilanes, toxic, corrosive, n.o.s."
+3362,voda,30,0.1,0.2,60,0.5,1.6,,"Chlorosilanes, poisonous, corrosive, flammable, n.o.s.; Chlorosilanes, toxic, corrosive, flammable, n.o.s."
+3381,,60,0.6,1.8,200,2.3,4.2,,"Poisonous by inhalation liquid, n.o.s. (Inhalation Hazard Zone A); Toxic by inhalation liquid, n.o.s. (Inhalation Hazard Zone A)"
+3382,,30,0.1,0.2,60,0.5,0.8,,"Poisonous by inhalation liquid, n.o.s. (Inhalation Hazard Zone B); Toxic by inhalation liquid, n.o.s. (Inhalation Hazard Zone B)"
+3383,,60,0.5,1.5,300,3.4,5.7,,"Poisonous by inhalation liquid, flammable, n.o.s. (Inhalation Hazard Zone A); Toxic by inhalation liquid, flammable, n.o.s. (Inhalation Hazard Zone A)"
+3384,,30,0.2,0.3,60,0.6,0.9,,"Poisonous by inhalation liquid, flammable, n.o.s. (Inhalation Hazard Zone B); Toxic by inhalation liquid, flammable, n.o.s. (Inhalation Hazard Zone B)"
+3385,,60,0.6,1.8,200,2.3,4.2,,"Poisonous by inhalation liquid, water-reactive, n.o.s. (Inhalation Hazard Zone A); Toxic by inhalation liquid, water-reactive, n.o.s. (Inhalation Hazard Zone A)"
+3386,,30,0.1,0.2,60,0.5,0.8,,"Poisonous by inhalation liquid, water-reactive, n.o.s. (Inhalation Hazard Zone B); Toxic by inhalation liquid, water-reactive, n.o.s. (Inhalation Hazard Zone B)"
+3387,,60,0.5,1.5,300,3.4,5.7,,"Poisonous by inhalation liquid, oxidizing, n.o.s. (Inhalation Hazard Zone A); Toxic by inhalation liquid, oxidizing, n.o.s. (Inhalation Hazard Zone A)"
+3388,,30,0.1,0.1,150,0.3,0.5,,"Poisonous by inhalation liquid, oxidizing, n.o.s. (Inhalation Hazard Zone B); Toxic by inhalation liquid, oxidizing, n.o.s. (Inhalation Hazard Zone B)"
+3389,,100,0.3,0.7,800,1.7,2.8,,"Poisonous by inhalation liquid, corrosive, n.o.s. (Inhalation Hazard Zone A); Toxic by inhalation liquid, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3390,,30,0.2,0.2,60,0.5,0.6,,"Poisonous by inhalation liquid, corrosive, n.o.s. (Inhalation Hazard Zone B); Toxic by inhalation liquid, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3456,voda,30,0.1,0.4,200,0.7,2.3,,"Nitrosylsulfuric acid, solid; Nitrosylsulphuric acid, solid"
+3488,,60,0.5,1.5,300,3.4,5.7,,"Poisonous by inhalation liquid, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A); Toxic by inhalation liquid, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A)"
+3489,,30,0.2,0.3,60,0.6,0.9,,"Poisonous by inhalation liquid, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B); Toxic by inhalation liquid, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B)"
+3490,,60,0.5,1.5,300,3.4,5.7,,"Poisonous by inhalation liquid, water-reactive, flammable, n.o.s. (Inhalation Hazard Zone A); Toxic by inhalation liquid, water-reactive, flammable, n.o.s. (Inhalation Hazard Zone A)"
+3491,,30,0.2,0.3,60,0.6,0.9,,"Poisonous by inhalation liquid, water-reactive, flammable, n.o.s. (Inhalation Hazard Zone B); Toxic by inhalation liquid, water-reactive, flammable, n.o.s. (Inhalation Hazard Zone B)"
+3494,,30,0.1,0.2,60,0.5,0.8,,"Petroleum sour crude oil, flammable, poisonous; Petroleum sour crude oil, flammable, toxic"
+3507,voda,30,0.1,0.1,30,0.1,0.1,,"Uranium hexafluoride, radioactive material, excepted package, less than 0.1 kg per package, non-fissile or fissile-excepted"
+3512,,30,0.1,0.1,30,0.1,0.1,,"Adsorbed gas, poisonous, n.o.s.; Adsorbed gas, poisonous, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, poisonous, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, poisonous, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, poisonous, n.o.s. (Inhalation Hazard Zone D); Adsorbed gas, toxic, n.o.s.; Adsorbed gas, toxic, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, toxic, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, toxic, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, toxic, n.o.s. (Inhalation Hazard Zone D)"
+3514,,30,0.1,0.1,30,0.1,0.1,,"Adsorbed gas, poisonous, flammable, n.o.s.; Adsorbed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, poisonous, flammable, n.o.s. (Inhalation Hazard Zone D); Adsorbed gas, toxic, flammable, n.o.s.; Adsorbed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, toxic, flammable, n.o.s. (Inhalation Hazard Zone D)"
+3515,,30,0.1,0.1,30,0.1,0.1,,"Adsorbed gas, poisonous, oxidizing, n.o.s.; Adsorbed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, poisonous, oxidizing, n.o.s. (Inhalation Hazard Zone D); Adsorbed gas, toxic, oxidizing, n.o.s.; Adsorbed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, toxic, oxidizing, n.o.s. (Inhalation Hazard Zone D)"
+3516,,30,0.1,0.1,30,0.1,0.1,,"Adsorbed gas, poisonous, corrosive, n.o.s.; Adsorbed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, poisonous, corrosive, n.o.s. (Inhalation Hazard Zone D); Adsorbed gas, toxic, corrosive, n.o.s.; Adsorbed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, toxic, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3517,,30,0.1,0.1,30,0.1,0.1,,"Adsorbed gas, poisonous, flammable, corrosive, n.o.s.; Adsorbed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, poisonous, flammable, corrosive, n.o.s. (Inhalation Hazard Zone D); Adsorbed gas, toxic, flammable, corrosive, n.o.s.; Adsorbed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, toxic, flammable, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3518,,30,0.1,0.1,30,0.1,0.1,,"Adsorbed gas, poisonous, oxidizing, corrosive, n.o.s.; Adsorbed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, poisonous, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone D); Adsorbed gas, toxic, oxidizing, corrosive, n.o.s.; Adsorbed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone A); Adsorbed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone B); Adsorbed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone C); Adsorbed gas, toxic, oxidizing, corrosive, n.o.s. (Inhalation Hazard Zone D)"
+3519,,30,0.1,0.1,30,0.1,0.1,,"Boron trifluoride, adsorbed"
+3520,,30,0.1,0.1,30,0.1,0.1,,"Chlorine, adsorbed"
+3521,,30,0.1,0.1,30,0.1,0.1,,"Silicon tetrafluoride, adsorbed"
+3522,,30,0.1,0.1,30,0.1,0.1,,"Arsine, adsorbed"
+3523,,30,0.1,0.1,30,0.1,0.1,,"Germane, adsorbed"
+3524,,30,0.1,0.1,30,0.1,0.1,,"Phosphorus pentafluoride, adsorbed"
+3525,,30,0.1,0.1,30,0.1,0.1,,"Phosphine, adsorbed"
+3526,,30,0.1,0.1,30,0.1,0.1,,"Hydrogen selenide, adsorbed"
+3539,,30,0.3,1.1,300,1.4,3.7,,"Articles containing toxic gas, n.o.s."
