@@ -66,38 +66,3 @@
 
 После: „покажи ключовете“ – кой има ключ; „спри ключ № N“ или „спри ключовете на Име Фамилия“ –
 спиране на достъп.
-
-## За разработка
-
-```
-.claude-plugin/marketplace.json      каталогът на marketplace-а
-plugins/fire-service/
-├── .claude-plugin/plugin.json
-├── shared/                          общият слой – редактира се тук
-│   ├── conventions.md, terminology.md, profile.md, connector.md, incident_lookup.md
-│   ├── incident_api.json            адресите на n8n (без ключ)
-│   ├── grafici/, sluzhiteli/katalog.json, raioni/koordinati_pleven.csv
-│   └── scripts/                     api_config.py, fetch_incidents.py, sluzhiteli.py, koya_sluzhba.py,
-│                                    grafik.py, obraztsi.py
-└── skills/<име>/
-    ├── SKILL.md                     по templates/SKILL_TEMPLATE.md
-    ├── _shared/                     генерирано копие на shared/ – не се редактира
-    ├── scripts/, assets/, references/
-    └── tests/
-tests/fixtures/                      измислени данни за тестовете (хората не съществуват)
-tools/sync_shared.py                 копира shared/ във всеки скил като _shared/
-tools/validate.py                    структура, връзки, тестове и проверката за лични данни (и в CI)
-tools/check_public.py                пази хранилището чисто: имена, ключове, имейли, ЕГН, ДКН
-tools/admin.py                       ключове, служители и файлове зад n8n
-```
-
-Промяна: редактирай → `python3 tools/sync_shared.py` → `python3 tools/validate.py` (трябва да
-завърши с `ALL CHECKS PASSED`) → вдигни версията в двата манифеста → ред в `CHANGELOG.md` →
-`git push`. Кодът и коментарите са на английски, текстовете за потребителя – на български.
-
-**Никога не качвай тук** истински имена, ключове, имейли, записи на произшествия, графици или
-текстове на служебни документи. `tools/check_public.py` спира проверката, ако намери такива;
-примерите и тестовете ползват измислени хора.
-
-Изисквания там, където вървят скриптовете: `python-docx`, `lxml`, `openpyxl`, `pillow`; за OCR –
-`poppler-utils`, `tesseract-ocr`, `tesseract-ocr-bul`.
