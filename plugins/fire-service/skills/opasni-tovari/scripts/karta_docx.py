@@ -180,7 +180,7 @@ def body(doc, lines):
         elif ln.startswith("- "):
             p = para(doc, 0.5, left=0.35); p.paragraph_format.first_line_indent = Cm(-0.3)
             inline(p, "• " + ln[2:], 10 if zone else 9)
-            if zone and not ln.startswith("- „") and re.search(r"изолирайте|защитете|евакуация", ln.lower()):
+            if zone and not ln.startswith(("- „", "- За изолирането")) and re.search(r"изолирайте|защитете|евакуация", ln.lower()):
                 for r_ in p.runs:
                     r_.bold = True
         elif ln.startswith("> "):
