@@ -67,24 +67,6 @@
 После: „покажи ключовете“ – кой има ключ; „спри ключ № N“ или „спри ключовете на Име Фамилия“ –
 спиране на достъп.
 
-### Същото от терминала
-
-Иска администраторски ключ. Скриптовете го намират в променливата `FIRE_SERVICE_KEY` или в личен
-скил `fire-service-key` в акаунта (виж `plugins/fire-service/shared/scripts/api_config.py`).
-Същите действия има и през конектора – инструментите `keys`, `staff_update`, `samples_save`.
-
-```bash
-python3 tools/admin.py key add "Име Фамилия"       # нов колега: ключ + готовият адрес за конектора
-python3 tools/admin.py key list                    # кой има ключ (всички ключове са само тук)
-python3 tools/admin.py key revoke "Име Фамилия"    # спира ключовете му
-python3 tools/admin.py key revoke --id 4           # спира един ключ по номера му от key list
-python3 tools/admin.py staff set "Име Фамилия" zaemana_dlazhnost="…" email=…
-python3 tools/admin.py staff publish staff.csv     # ново поименно разписание
-python3 tools/admin.py files put raioni naseleni_mesta.csv
-```
-
-Името в `key add` е точно както е в колоната `ime_kratko` на списъка (`staff get`).
-
 ## За разработка
 
 ```
