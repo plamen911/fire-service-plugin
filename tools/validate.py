@@ -15,6 +15,7 @@ validate.py — проверява репозиторито преди push (и 
   • _shared/ копията са синхронизирани с plugins/fire-service/shared/;
   • всички .py се компилират; няма очевидни пароли/токени;
   • в хранилището няма лични данни и тайни (tools/check_public.py) – то е публично;
+  • в шаблоните на документите няма получер шрифт;
   • тестовете в skills/*/tests/ минават.
 """
 import argparse
@@ -118,6 +119,25 @@ def check_secrets():
     print("✓ secret scan")
 
 
+def check_no_bold():
+    """No bold in the templates of the documents (a rule of the directorate – shared/conventions.md)."""
+    import zipfile
+    rx = re.compile(r"<w:b(Cs)?[ /]|<b/>|<b val=\"(1|true)\"")
+    bad = 0
+    for f in glob.glob(os.path.join(SKILLS, "*", "assets", "*.docx")) + glob.glob(os.path.join(SKILLS, "*", "assets", "*.xlsx")) \
+            + glob.glob(os.path.join(SKILLS, "*", "assets", "*.xml")):
+        if f.endswith(".xml"):
+            texts = [open(f, encoding="utf-8").read()]
+        else:
+            with zipfile.ZipFile(f) as z:
+                texts = [z.read(n).decode("utf-8", "ignore") for n in z.namelist() if n.endswith(".xml")]
+        if any(rx.search(t) for t in texts):
+            bad += 1
+            err(f"bold text in a template: {os.path.relpath(f, ROOT)}")
+    if not bad:
+        print("✓ no bold in the templates")
+
+
 def run_tests():
     for t in sorted(glob.glob(os.path.join(SKILLS, "*", "tests", "test_*.py"))):
         r = subprocess.run([sys.executable, t], cwd=os.path.dirname(os.path.dirname(t)),
@@ -146,6 +166,7 @@ def main():
     (print(r.stdout.strip().splitlines()[-1]) if r.returncode == 0 else err("public check:\n" + r.stdout.strip()[-3000:]))
     check_python()
     check_secrets()
+    check_no_bold()
     if not a.no_tests:
         run_tests()
     print()
