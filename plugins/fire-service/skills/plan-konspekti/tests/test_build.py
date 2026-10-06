@@ -37,10 +37,12 @@ def doc_text(path):
 
 
 def no_bold(path):
+    """No bold run in the body, headers and footers (unused built-in styles do not count)."""
+    import re
     import zipfile
     with zipfile.ZipFile(path) as z:
-        return not any("<w:b/>" in z.read(n).decode("utf-8", "ignore") or "<w:b " in z.read(n).decode("utf-8", "ignore")
-                       for n in z.namelist() if n.startswith("word/") and n.endswith(".xml"))
+        parts = [n for n in z.namelist() if re.match(r"word/(document|header\d*|footer\d*)\.xml$", n)]
+        return not any(re.search(r"<w:b(/| )", z.read(n).decode("utf-8", "ignore")) for n in parts)
 
 
 def run(script, data, tmp, *extra):
