@@ -36,6 +36,13 @@ def doc_text(path):
     return "\n".join(parts), d
 
 
+def no_bold(path):
+    import zipfile
+    with zipfile.ZipFile(path) as z:
+        return not any("<w:b/>" in z.read(n).decode("utf-8", "ignore") or "<w:b " in z.read(n).decode("utf-8", "ignore")
+                       for n in z.namelist() if n.startswith("word/") and n.endswith(".xml"))
+
+
 def run(script, data, tmp, *extra):
     dp, out = os.path.join(tmp, "d.json"), os.path.join(tmp, "o.docx")
     with open(dp, "w", encoding="utf-8") as f:
@@ -70,6 +77,7 @@ def test_oc():
     check("Георги Дъбов" in text and "инспектор Иван Петров" in text, "approver and author")
     check(len(d.inline_shapes) == 1 and info["figuri"] == 1 and "Фиг. 1. Проба" in text, "one figure with a caption")
     check(info["preduprezhdeniya"] == [], "no warnings")
+    check(no_bold(out), "no bold anywhere in the document")
     data["tema2"] = {"uprazhnenie": "9.99"}
     r, _ = run("build_konspekt.py", data, tmp)
     check(r.returncode != 0 and "BAD_INPUT" in r.stderr, "unknown exercise is refused")
@@ -109,6 +117,7 @@ def test_otchet():
         check("е 72 сек., което е за 4 точки." in text and "Без грешки." in text, "results")
         check("3 служители от състава" in text and "1 служител от състава" in text, "attendance")
         check("Екз. № 1 – деловодство" in text and "Инспектор IV ст. в група ОЦ" in text, "footer block")
+        check(no_bold(out), "no bold anywhere in the document")
     del data["zvena"][0]["tochki"]
     r, _ = run("build_otchet.py", data, tmp)
     check(r.returncode != 0 and "NO_NORM" in r.stderr, "seconds without a norm → NO_NORM")

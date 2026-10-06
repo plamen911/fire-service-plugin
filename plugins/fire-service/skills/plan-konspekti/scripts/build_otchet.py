@@ -117,12 +117,12 @@ def build(d, out):
         if present is None:
             bad(f"за {u['zveno']} липсва \"prisastvali\"")
         B.blank(doc)
-        B.para(doc, f"**{i}. В {u['zveno']}**")
-        B.para(doc, f"**ТЕМА 1 (лекция):** „{tema1}.“")
-        B.para(doc, f"**ТЕМА 2 (практика):** {text2}")
+        B.para(doc, f"{i}. В {u['zveno']}")
+        B.para(doc, f"ТЕМА 1 (лекция): „{tema1}.“")
+        B.para(doc, f"ТЕМА 2 (практика): {text2}")
         word = "служител" if int(present) == 1 else "служители"
-        B.para(doc, f"**ПРИСЪСТВАЛИ СЛУЖИТЕЛИ:** {int(present)} {word} от състава на дежурната смяна.")
-        B.para(doc, f"**ПОСТИГНАТИ РЕЗУЛТАТИ:** {result_sentence(u, (ex or {}).get('normativ'), number)}")
+        B.para(doc, f"ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: {int(present)} {word} от състава на дежурната смяна.")
+        B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, (ex or {}).get('normativ'), number)}")
     B.blank(doc, 3)
     position = sign.get("position") or ""
     name = sign.get("name") or B.PLACEHOLDER_NAME

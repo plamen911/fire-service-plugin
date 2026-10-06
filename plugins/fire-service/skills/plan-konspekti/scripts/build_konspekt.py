@@ -30,8 +30,8 @@ data.json (всичко извън "kind", "tema", "tsel" и "izlozhenie" има
   "myasto": "…", "uchastvashti": "…",                               // ако трябва друг текст
   "materialno": ["Наредба № 8121з-1006 от 24.08.2015 г. за …", "…"],
   "izlozhenie": [
-    "## 1. Причини за възникване",                                   // подзаглавие (получер)
-    "Обикновен абзац със свои думи. **Получер** се огражда с две звездички.",
+    "## 1. Причини за възникване",                                   // подзаглавие (на отделен ред, без получер)
+    "Обикновен абзац със свои думи. *Курсив* (име на възел, термин) се огражда със звездички.",
     "> Чл. 42. При гасене на пожар в посеви … РОД е необходимо да:", // дословен цитат от акт (курсив)
     "- първа точка от изброяване",
     {"fig": "fig/s02.png", "caption": "Фиг. 1. Булин", "height_cm": 4.5},   // фигура, центрирана, с надпис
@@ -45,7 +45,7 @@ data.json (всичко извън "kind", "tema", "tsel" и "izlozhenie" има
 }
 
 Пътищата на фигурите са спрямо папката на data.json. Типографията следва _shared/conventions.md:
-„№ 4“ и тире „–“. Скриптът отпечатва JSON {"output", "kind", "znatsi_izlozhenie", "figuri", "preduprezhdeniya"}.
+„№ 4“, тире „–“ и НИКАКЪВ получер шрифт – подзаглавията и етикетите са обикновен текст. Скриптът отпечатва JSON {"output", "kind", "znatsi_izlozhenie", "figuri", "preduprezhdeniya"}.
 
 Грешки (на stderr, код ≠ 0):
     BAD_INPUT: ...   — липсва задължително поле, непознат вид или упражнение, няма го файлът на фигура
@@ -94,7 +94,7 @@ def exercise_text(number, ex, metodika):
 
 def field(doc, label, value, roman=None):
     label = f"{roman}. {label}" if roman else label
-    B.para(doc, f"**{label}:** {value}")
+    B.para(doc, f"{label}: {value}")
 
 
 def field_list(doc, label, items, roman=None):
@@ -149,7 +149,7 @@ def exposition(doc, items, base, warnings):
         if not text:
             B.blank(doc)
         elif text.startswith("## "):
-            p = B.para(doc, text[3:], bold=True, keep=True)
+            p = B.para(doc, text[3:], keep=True)
             p.paragraph_format.space_before = B.Pt(6)
         elif text.startswith("> "):
             B.para(doc, text[2:], italic=True, keep=keep)
@@ -255,7 +255,7 @@ def build(d, out, base):
         B.blank(doc)
         chars, figs = exposition(doc, items, base, warnings)
 
-    B.blank(doc, 2)
+    B.blank(doc)
     B.signature(doc, sign.get("date") or "", sign.get("lines") or OC_SIGN, sign.get("name") or B.PLACEHOLDER_NAME)
     B.page_numbers(doc)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)

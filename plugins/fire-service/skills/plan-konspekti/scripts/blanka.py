@@ -7,6 +7,8 @@ Imported by build_konspekt.py and build_otchet.py; not run on its own.
 
 The look follows the approved documents of the directorate: A4, Times New Roman 12 pt, exact
 line spacing, first-line indent 1.5 cm, the letterhead and the approval block in borderless tables.
+NO BOLD anywhere (a rule of the directorate, to save toner – _shared/conventions.md): headings and
+labels are plain text, emphasis is italic.
 Typography follows _shared/conventions.md: „№ 4“ and the dash „–“.
 """
 import os
@@ -76,21 +78,22 @@ def fmt(p, align=None, indent=False, line=LINE, keep=False):
     return p
 
 
-def run(p, text, bold=False, italic=False, size=None):
+def run(p, text, italic=False, size=None):
     r = p.add_run(typo(text))
-    r.bold, r.italic = bold or None, italic or None
+    r.italic = italic or None
     r.font.name = FONT
     if size:
         r.font.size = Pt(size)
     return r
 
 
-def para(doc, text="", align=JUSTIFY, indent=True, bold=False, italic=False, size=None, line=LINE, keep=False):
-    """One paragraph. „**…**“ inside the text marks bold parts (labels like „ТЕМА 1:“)."""
+def para(doc, text="", align=JUSTIFY, indent=True, italic=False, size=None, line=LINE, keep=False):
+    """One paragraph. „*…*“ inside the text marks italic parts (the name of a knot, a term);
+    „**…**“ is taken as the same – there is no bold in the documents."""
     p = fmt(doc.add_paragraph(), align, indent, line, keep)
-    for i, part in enumerate(re.split(r"\*\*(.+?)\*\*", text)):
+    for i, part in enumerate(re.split(r"\*{1,2}(.+?)\*{1,2}", text)):
         if part:
-            run(p, part, bold=bold or i % 2 == 1, italic=italic, size=size)
+            run(p, part, italic=italic or i % 2 == 1, size=size)
     return p
 
 
@@ -110,13 +113,13 @@ def _borderless(table):
 
 
 def _cell(cell, lines, align=LEFT):
-    """lines: [text | (text, {"bold", "size", "align"})]; the first one reuses the cell's paragraph."""
+    """lines: [text | (text, {"size", "align"})]; the first one reuses the cell's paragraph."""
     for i, item in enumerate(lines):
         text, opt = (item, {}) if isinstance(item, str) else item
         p = cell.paragraphs[0] if i == 0 else cell.add_paragraph()
         fmt(p, opt.get("align", align), line=None)
         if text:
-            run(p, text, bold=opt.get("bold", False), size=opt.get("size"))
+            run(p, text, size=opt.get("size"))
 
 
 def letterhead(doc):
@@ -147,7 +150,7 @@ def approval(doc, approver, year, reg=False, width_cm=16.5):
 def title(doc, text, subtitle_lines):
     spaced = " ".join(text) if " " not in text.strip() else text   # „П Л А Н – К О Н С П Е К Т“
     p = fmt(doc.add_paragraph(), CENTER, line=None)
-    run(p, spaced, bold=True, size=20)
+    run(p, spaced, size=16)
     blank(doc)
     for line in subtitle_lines:
         para(doc, line, align=CENTER, indent=False)
