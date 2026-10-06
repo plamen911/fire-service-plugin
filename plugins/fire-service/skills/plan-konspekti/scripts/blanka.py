@@ -122,12 +122,50 @@ def _cell(cell, lines, align=LEFT):
             run(p, text, size=opt.get("size"))
 
 
-def letterhead(doc):
+def letterhead(doc, extra=None):
+    """The letterhead; extra = one more line under it (the unit, e.g. „РСПБЗН – Левски“)."""
     t = doc.add_table(rows=1, cols=1)
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
     _borderless(t)
-    _cell(t.cell(0, 0), [(text, {"size": size}) for text, size in HEADER], align=CENTER)
+    lines = HEADER + ([(extra.upper(), 14)] if extra else [])
+    _cell(t.cell(0, 0), [(text, {"size": size}) for text, size in lines], align=CENTER)
     blank(doc)
+
+
+def grid(doc, header, rows, widths_cm, align=None):
+    """A bordered table: header = column titles, rows = lists of cell texts (a cell may be a list of
+    paragraphs). No bold; the header is centered."""
+    t = doc.add_table(rows=1 + len(rows), cols=len(header))
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    t.autofit = False
+    layout = OxmlElement("w:tblLayout")
+    layout.set(qn("w:type"), "fixed")
+    t._tbl.tblPr.append(layout)
+    for col, w in zip(t.columns, widths_cm):
+        col.width = Cm(w)
+    for r, cells in enumerate([header] + rows):
+        for c, value in enumerate(cells):
+            cell = t.cell(r, c)
+            cell.width = Cm(widths_cm[c])
+            lines = value if isinstance(value, list) else [value]
+            _cell(cell, [str(x) for x in lines] or [""], align=CENTER if r == 0 else (align or JUSTIFY))
+    return t
+
+
+def unit_chief_approver(unit):
+    """The approval lines for the chief of a РСПБЗН/УПБЗН from the staff list, or None."""
+    mod = staff_module()
+    if mod is None:
+        return None
+    try:
+        ch = mod.nachalnik(re.sub(r"^.*?[–-]\s*", "", unit))
+    except BaseException:  # noqa: BLE001
+        return None
+    if not ch or not ch.get("ime"):
+        return None
+    post = ("ВПД " if ch.get("vpd") else "") + "НАЧАЛНИК НА"
+    return {"lines": [post, (ch.get("zveno") or unit).upper() + ":", (ch.get("zvanie") or "").upper()], "name": ch["ime"]}
 
 
 def approval(doc, approver, year, reg=False, width_cm=16.5):
