@@ -10,7 +10,7 @@ data.json:
 {
   "data": "27.10.2026 г.",                                  // датата на занятието
   "tema1": "Гасене на пожари в житни масиви",               // темата на лекцията
-  "tema2": {"uprazhnenie": "1.1"},                          // упражнение от data/uprazhneniya.json
+  "tema2": {"uprazhnenie": "1.1"},                          // упражнение от данните за упражненията
                                                             //   или {"tekst": "Проиграване на …"}
   "zvena": [
     {"zveno": "РСПБЗН – Червен бряг", "prisastvali": 3, "sekundi": 72, "tochki": 4},
@@ -24,7 +24,7 @@ data.json:
   "rezultat"            свободен текст (едно изречение);
   "sekundi" + "tochki"  „… е 72 сек., което е за 4 точки.“;
   "sekundi"             упражнение за време (Приложение № 1 на методиката): точките се смятат по
-                        норматива му в data/uprazhneniya.json; за упражнение без норматив (за правилно
+                        норматива му в данните за упражненията; за упражнение без норматив (за правилно
                         изпълнение или със свой текст) скриптът спира с NO_NORM – попитай за точките;
   "tochki"              упражнение за правилно изпълнение (Приложение № 2): „При изпълнение на
                         упражнението служителите постигнаха N точки.“; повече от най-многото по
@@ -44,6 +44,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import blanka as B  # noqa: E402
+import build_konspekt  # noqa: E402
 from build_konspekt import exercise_text, exercises  # noqa: E402
 
 
@@ -71,7 +72,7 @@ def result_sentence(z, ex, number):
     sec, pts = z.get("sekundi"), z.get("tochki")
     if sec is not None and pts is None:
         if not norm:
-            sys.exit(f"NO_NORM: за упражнение {number or '(свой текст)'} няма норматив в data/uprazhneniya.json – "
+            sys.exit(f"NO_NORM: за упражнение {number or '(свой текст)'} няма норматив в данните за упражненията – "
                      f"подай \"tochki\" за {z.get('zveno')}")
         pts = points(norm, float(sec))
     top = (ex or {}).get("max_tochki") or (6 if (ex or {}).get("normativ") else None)
@@ -96,11 +97,11 @@ def build(d, out):
     warnings = []
     year = date[6:10]
     t2 = dict(d.get("tema2") or {})
-    ex_data = exercises()
+    ex_data = {} if t2.get("tekst") and not t2.get("uprazhnenie") else exercises()
     number = t2.get("uprazhnenie") or (None if t2.get("tekst") else ex_data["po_podrazbirane"])
     ex = ex_data["uprazhneniya"].get(number) if number else {}
     if number and ex is None:
-        bad(f"няма упражнение „{number}“ в data/uprazhneniya.json – подай \"tema2\": {{\"tekst\": …}}")
+        bad(f"няма упражнение „{number}“ в данните за упражненията – подай \"tema2\": {{\"tekst\": …}}")
     text2 = t2.get("tekst") or exercise_text(number, ex, ex_data["metodika"])
     tema1 = d["tema1"].strip().rstrip(".")
     names = B.join_units([u.get("zveno", "") for u in units])
@@ -148,7 +149,9 @@ def main():
     ap = argparse.ArgumentParser(description="Отчет за проведено занятие (.docx)")
     ap.add_argument("data", help="data.json")
     ap.add_argument("-o", "--output", required=True, help="изходен .docx")
+    ap.add_argument("--uprazhneniya", help="записан файл с упражненията вместо нормативната база (тестове)")
     a = ap.parse_args()
+    build_konspekt.EX_FILE = a.uprazhneniya
     try:
         with open(a.data, encoding="utf-8") as f:
             d = json.load(f)

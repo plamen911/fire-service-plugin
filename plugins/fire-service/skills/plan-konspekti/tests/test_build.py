@@ -49,7 +49,8 @@ def run(script, data, tmp, *extra):
     dp, out = os.path.join(tmp, "d.json"), os.path.join(tmp, "o.docx")
     with open(dp, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
-    r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", script), dp, "-o", out, *extra],
+    r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", script), dp, "-o", out,
+                        "--uprazhneniya", os.path.join(HERE, "fixtures", "uprazhneniya.json"), *extra],
                        capture_output=True, text=True)
     return r, out
 
@@ -75,6 +76,9 @@ def test_oc():
     check("рег. № 947р-0000/15.12.2025 г." in text and "през 2026 г." in text, "plan-grafik and year in the subtitle")
     check("Сградите на РСПБЗН – Левски и РСПБЗН – Белене" in text, "place from the units")
     check("Вдигане в контролна тревога" in text and "№ 8121з-1702/09.12.2022 г." in text, "exercise 1.1 from the data file")
+    r2 = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", "build_konspekt.py"), os.path.join(tmp, "d.json"),
+                         "-o", os.path.join(tmp, "x.docx")], capture_output=True, text=True)
+    check(r2.returncode != 0 and "NO_KEY" in r2.stderr, "without a key and without a file the exercises are not read → NO_KEY")
     check("Правила № 1" in text and "Текст – с получер." in text, "typography: „№ 1“ and the dash")
     check("Георги Дъбов" in text and "инспектор Иван Петров" in text, "approver and author")
     check(len(d.inline_shapes) == 1 and info["figuri"] == 1 and "Фиг. 1. Проба" in text, "one figure with a caption")
@@ -107,6 +111,28 @@ def test_seminar():
     data["izlozhenie"] = []
     r, _ = run("build_konspekt.py", data, tmp)
     check("няма изложение" in r.stdout, "warns when there is no exposition")
+
+
+def test_psp():
+    print("build_konspekt: psp")
+    tmp = tempfile.mkdtemp()
+    data = {"kind": "psp", "year": "2026", "zveno": "РСПБЗН – Левски", "uprazhnenie": "1.9 Б",
+            "approver": {"lines": ["НАЧАЛНИК НА", "РСПБЗН – ЛЕВСКИ:", "ГЛАВЕН ИНСПЕКТОР"], "name": "Георги Дъбов"},
+            "izgotvil": SIGN, "merki": ["Облекло и оборудване по Вариант № 2."], "minuti": {"osnovna": 30}}
+    r, out = run("build_konspekt.py", data, tmp)
+    check(r.returncode == 0, "builds" + ("" if r.returncode == 0 else ": " + r.stderr[-300:]))
+    if r.returncode:
+        return
+    text, d = doc_text(out)
+    check("за провеждане на занятие по ПСП със служителите от РСПБЗН – Левски" in text, "subtitle of Приложение № 4")
+    check("ТЕМА: Упражнение № 1.9 Б" in text and "МЕРКИ ЗА БЕЗОПАСНОСТ И ЗДРАВЕ: Облекло" in text, "topic from the exercise, safety measures")
+    check("Подготвителна част" in text and "до 10 минути" in text and "30 минути" in text and "до 5 минути" in text, "three parts with minutes")
+    check("Резултат: 6 точки ≤ 45 секунди" in text, "main part: the exercise with its scale")
+    check("ДАТА И ЧАСОВИ ИНТЕРВАЛ" in text and len(d.tables[-1].rows) == 7, "table of the sessions with 6 empty rows")
+    check(no_bold(out), "no bold anywhere in the document")
+    del data["uprazhnenie"]
+    r, _ = run("build_konspekt.py", data, tmp)
+    check(r.returncode != 0 and "BAD_INPUT" in r.stderr, "neither an exercise nor a topic → refused")
 
 
 def test_otchet():
@@ -187,7 +213,7 @@ def test_figuri():
 
 
 if __name__ == "__main__":
-    for t in (test_oc, test_seminar, test_otchet, test_grafik, test_figuri):
+    for t in (test_oc, test_seminar, test_psp, test_otchet, test_grafik, test_figuri):
         t()
     print(f"\n{len(failures)} failures" if failures else "\nall ok")
     sys.exit(1 if failures else 0)

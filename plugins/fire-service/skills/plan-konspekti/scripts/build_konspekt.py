@@ -10,7 +10,11 @@ build_konspekt.py — изгражда ПЛАН-КОНСПЕКТ за прове
 Два вида (поле "kind"):
   "oc"       занятие на инспекторите от група „Оперативен център“ по годишния план-график –
              ТЕМА 1 (лекция, с изложение) и ТЕМА 2 (практика – упражнение от методиката по ППС);
-  "seminar"  семинар / професионално обучение по месторабота – една тема, полета I–VI.
+  "seminar"  семинар / професионално обучение по месторабота – една тема, полета I–VI;
+  "psp"      занятие по пожаро-строева подготовка с дежурните смени – по образеца от Приложение № 4
+             на Специализираната методика по ПСП (заповед № 8121з-1702/09.12.2022 г.): тема, цел,
+             място, участващи, материално-техническо осигуряване, мерки за безопасност и здраве,
+             таблица „Организация и ход на занятието“ и таблица за провежданията през годината.
 
 data.json (всичко извън "kind", "tema", "tsel" и "izlozhenie" има стойност по подразбиране):
 {
@@ -37,12 +41,29 @@ data.json (всичко извън "kind", "tema", "tsel" и "izlozhenie" има
     {"fig": "fig/s02.png", "caption": "Фиг. 1. Булин", "height_cm": 4.5},   // фигура, центрирана, с надпис
     {"figs": ["a.png", "b.png"], "caption": "Фиг. 2. …", "height_cm": 4}   // няколко изображения в един ред
   ],
-  "tema2": {"uprazhnenie": "1.1"},                                   // "oc": упражнение от data/uprazhneniya.json
+  "tema2": {"uprazhnenie": "1.1"},                                   // "oc": упражнение от методиката (scripts/uprazhneniya.py)
         // или изцяло свой текст: {"tekst": "…", "tsel_uvod": "…", "tsel": ["…"], "materialno": "…"}
         // по желание: "opisanie": true – описанието, скалата за резултата и забележката от методиката;
         //             или "opisanie": ["свой ред", …]
   "izgotvil": {"date": "20.10.2026 г.", "lines": ["ИНСПЕКТОР В", "ГРУПА „ОПЕРАТИВЕН ЦЕНТЪР“"],
                "name": "инспектор Иван Петров"}
+}
+
+За "psp" (останалите полета – както по-горе; "izlozhenie" не се ползва):
+{
+  "kind": "psp",
+  "year": "2026",
+  "zveno": "РСПБЗН – Левски",                      // звеното; началникът му утвърждава (от списъка)
+  "uprazhnenie": "1.9 Б",                           // от методиката (scripts/uprazhneniya.py): тема, описание, скала
+  "tema": "…", "tsel": "…",                         // по подразбиране – от упражнението
+  "myasto": "Двор на РСПБЗН – Левски",
+  "uchastvashti": "Служителите от дежурните смени на РСПБЗН – Левски",
+  "materialno": ["…"],                              // по подразбиране – от упражнението
+  "merki": ["Упражнението се изпълнява с облекло и оборудване по Вариант № 2.", "…"],   // мерки за БЗР
+  "hod": {"podgotvitelna": ["…"], "osnovna": ["…"], "zaklyuchitelna": ["…"]},   // своите действия по части;
+                                                    // по подразбиране – чл. 7 от методиката и описанието на упражнението
+  "minuti": {"podgotvitelna": 10, "osnovna": 30, "zaklyuchitelna": 5},
+  "redove_provezhdane": 6                           // празни редове в таблицата за провежданията
 }
 
 Пътищата на фигурите са спрямо папката на data.json. Типографията следва _shared/conventions.md:
@@ -62,7 +83,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import blanka as B  # noqa: E402
 
-DATA = os.path.join(HERE, "..", "data", "uprazhneniya.json")
+EX_FILE = None      # --uprazhneniya: a saved data file instead of the regulations base (n8n)
 OC_SUBTITLE = ["за провеждане на занятие съгласно план–график, {plan_grafik},",
                "за провеждане на занятията от инспекторите в група „Оперативен център“",
                "на сектор „Пожарогасителна и спасителна дейност“ през {year} г."]
@@ -79,15 +100,9 @@ def bad(msg):
 
 
 def exercises():
-    with open(DATA, encoding="utf-8") as f:
-        d = json.load(f)
-
-    def deref(v):
-        return d[v[1:]] if isinstance(v, str) and v.startswith("@") else v
-    for ex in d["uprazhneniya"].values():
-        for key in ("tsel_uvod", "tsel", "materialno"):
-            ex[key] = deref(ex[key])
-    return d
+    """The exercises of the methodology – from the regulations base (scripts/uprazhneniya.py)."""
+    import uprazhneniya
+    return uprazhneniya.load(EX_FILE)
 
 
 def exercise_text(number, ex, metodika):
@@ -185,10 +200,94 @@ def exposition(doc, items, base, warnings):
     return chars, figs
 
 
+PSP_PARTS = [("podgotvitelna", "Подготвителна част", 10), ("osnovna", "Основна част", None),
+             ("zaklyuchitelna", "Заключителна част", 5)]
+PSP_DEFAULT = {
+    "podgotvitelna": ["Ръководителят на занятието обявява темата, обяснява накратко целите и задачите на занятието "
+                      "и разяснява мерките за безопасност и здраве при работа.",
+                      "Обучаемите се строяват, проверяват облеклото и оборудването си и правят кратка загрявка."],
+    "zaklyuchitelna": ["Ръководителят на занятието прави разбор: анализира действията на служителите, обявява "
+                       "постигнатите резултати, отбелязва допуснатите слабости и дава насоки за бъдещата работа.",
+                       "Обучаемите привеждат техниката и въоръжението в готовност."],
+}
+
+
+def build_psp(d, out):
+    """Занятие по ПСП – the form of Приложение № 4 of the methodology."""
+    warnings = []
+    year = str(d.get("year") or "").strip()
+    unit = B.typo(str(d.get("zveno") or "").strip())
+    if not year or not unit:
+        bad('за вид "psp" трябват "year" и "zveno"')
+    number = d.get("uprazhnenie")
+    ex_data = exercises() if number else {"uprazhneniya": {}}
+    ex = ex_data["uprazhneniya"].get(number) if number else None
+    if number and ex is None:
+        bad(f"няма упражнение „{number}“ в данните за упражненията")
+    if not ex and not (d.get("tema") and d.get("tsel")):
+        bad('за вид "psp" трябва "uprazhnenie" или свои "tema" и "tsel"')
+    tema = d.get("tema") or f"Упражнение № {number} „{ex['ime']}“"
+    if d.get("tsel"):
+        tsel = [d["tsel"]]
+    else:
+        tsel = [ex["tsel_uvod"]] + ["– " + g for g in ex["tsel"]]
+    approver = d.get("approver") or B.unit_chief_approver(unit)
+    if not approver:
+        approver = {"lines": ["НАЧАЛНИК НА", unit.upper() + ":", B.PLACEHOLDER_RANK], "name": B.PLACEHOLDER_NAME}
+        warnings.append("няма данни за утвърждаващия (началника на звеното) – подай \"approver\"")
+    sign = dict(d.get("izgotvil") or {})
+    if not sign.get("name"):
+        warnings.append("няма данни за изготвилия – подай \"izgotvil\"")
+    merki = d.get("merki") or []
+    if not merki:
+        warnings.append("празни „Мерки за безопасност и здраве“ – попълни ги по упражнението и указанията към него")
+    hod, minutes = dict(d.get("hod") or {}), dict(d.get("minuti") or {})
+    if not hod.get("osnovna"):
+        hod["osnovna"] = exercise_description(number, ex) if ex else []
+        if not hod["osnovna"]:
+            warnings.append("празна „Основна част“ – подай \"hod\": {\"osnovna\": […]}")
+
+    doc = B.new_document()
+    B.letterhead(doc, extra=unit)
+    B.approval(doc, approver, year, reg=True)
+    B.title(doc, "ПЛАН–КОНСПЕКТ", d.get("subtitle") or [f"за провеждане на занятие по ПСП със служителите от {unit}"])
+    field(doc, "ТЕМА", tema.rstrip(".") + ".")
+    field(doc, "ЦЕЛ", tsel[0])
+    for line in tsel[1:]:
+        B.para(doc, line)
+    field(doc, "МЯСТО", (d.get("myasto") or f"Сградата на {unit} и прилежащите към нея площи").rstrip(".") + ".")
+    field(doc, "УЧАСТВАЩИ В ЗАНЯТИЕТО", (d.get("uchastvashti") or f"Служителите от дежурните смени на {unit}").rstrip(".") + ".")
+    field_list(doc, "МАТЕРИАЛНО-ТЕХНИЧЕСКО ОСИГУРЯВАНЕ", d.get("materialno") or ((ex or {}).get("materialno") or ""))
+    field_list(doc, "МЕРКИ ЗА БЕЗОПАСНОСТ И ЗДРАВЕ", merki)
+    B.blank(doc)
+    B.para(doc, "ОРГАНИЗАЦИЯ И ХОД НА ЗАНЯТИЕТО:", indent=False, keep=True)
+    rows = []
+    for i, (key, label, limit) in enumerate(PSP_PARTS, 1):
+        m = minutes.get(key)
+        dur = f"{m} минути" if m else (f"до {limit} минути" if limit else "…… минути")
+        rows.append([str(i), [label, dur], hod.get(key) or PSP_DEFAULT.get(key) or [""]])
+    B.grid(doc, ["№", "УЧЕБНИ ВЪПРОСИ И ПРОДЪЛЖИТЕЛНОСТ В МИНУТИ", "ДЕЙСТВИЯ НА РЪКОВОДИТЕЛЯ НА ЗАНЯТИЕТО И НА ОБУЧАЕМИТЕ"],
+           rows, [1.0, 5.2, 10.3])
+    B.blank(doc, 2)
+    B.signature(doc, sign.get("date") or "", sign.get("lines") or [], sign.get("name") or B.PLACEHOLDER_NAME)
+    B.blank(doc, 2)
+    n = int(d.get("redove_provezhdane") or 6)
+    B.grid(doc, ["№", ["ДАТА И ЧАСОВИ ИНТЕРВАЛ", "НА ПРОВЕЖДАНЕ"], ["РЪКОВОДИТЕЛ НА ЗАНЯТИЕТО", "(име, длъжност, подпис)"],
+                 ["РЪКОВОДИТЕЛ", "НА ЗВЕНОТО ЗА ПБЗН", "(име, длъжност, подпис)"]],
+           [[str(i), ["", ""], "", ""] for i in range(1, n + 1)], [1.0, 4.5, 5.5, 5.5])
+    B.page_numbers(doc)
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    doc.save(out)
+    chars = sum(len(x) for v in hod.values() for x in (v or []))
+    return {"output": out, "kind": "psp", "znatsi_izlozhenie": chars, "figuri": 0, "preduprezhdeniya": warnings}
+
+
 def build(d, out, base):
     kind = d.get("kind")
+    if kind == "psp":
+        return build_psp(d, out)
     if kind not in ("oc", "seminar"):
-        bad('"kind" трябва да е "oc" или "seminar"')
+        bad('"kind" трябва да е "oc", "seminar" или "psp"')
     for k in ("tema", "tsel"):
         if not str(d.get(k) or "").strip():
             bad(f'липсва "{k}"')
@@ -238,13 +337,13 @@ def build(d, out, base):
         B.blank(doc)
 
         t2 = dict(d.get("tema2") or {})
-        ex_data = exercises()
+        ex_data = {} if t2.get("tekst") and not t2.get("uprazhnenie") else exercises()
         number = t2.get("uprazhnenie") or (None if t2.get("tekst") else ex_data["po_podrazbirane"])
         ex = {}
         if number:
             ex = ex_data["uprazhneniya"].get(number)
             if ex is None:
-                bad(f"няма упражнение „{number}“ в data/uprazhneniya.json – налични: "
+                bad(f"няма упражнение „{number}“ в данните за упражненията – налични: "
                     + ", ".join(ex_data["uprazhneniya"]) + '; подай "tema2" със свой текст ("tekst", "tsel")')
         text2 = t2.get("tekst") or exercise_text(number, ex, ex_data["metodika"])
         field(doc, "ТЕМА 2", text2)
@@ -292,7 +391,10 @@ def main():
     ap = argparse.ArgumentParser(description="План-конспект за занятие (.docx)")
     ap.add_argument("data", help="data.json")
     ap.add_argument("-o", "--output", required=True, help="изходен .docx")
+    ap.add_argument("--uprazhneniya", help="записан файл с упражненията вместо нормативната база (тестове)")
     a = ap.parse_args()
+    global EX_FILE
+    EX_FILE = a.uprazhneniya
     try:
         with open(a.data, encoding="utf-8") as f:
             d = json.load(f)
