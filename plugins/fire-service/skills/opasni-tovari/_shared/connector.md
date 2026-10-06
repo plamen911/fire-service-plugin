@@ -6,7 +6,7 @@
 скрипт. Скриптовете, които питат n8n, без ключ спират с `NO_KEY`.
 
 **Как познаваш режима.** Ако в разговора има инструментите `incidents`, `staff`, `whoami`,
-`regs_list`, `regs_read`, `duty`, `duty_save`, `samples` и `raioni` (конектор Fire Service),
+`regs_list`, `regs_read`, `duty`, `duty_save`, `samples`, `raioni`, `voda` и `voda_save` (конектор Fire Service),
 ползвай **тях** за всичко, което иначе скриптовете взимат от n8n. Ако ги няма, работи със
 скриптовете, както е описано в скила (те намират ключа сами – `_shared/scripts/api_config.py`).
 Ако няма нито инструменти, нито ключ (`NO_KEY`) – кажи, че данните не са достъпни, защото
@@ -28,6 +28,9 @@
 | `koya_sluzhba.py МЯСТО` | `raioni` с `name` (и `obshtina`, `oblast`) | редовете идват като CSV: запиши `header` и `rows` във файл и пусни `koya_sluzhba.py МЯСТО --csv ФАЙЛ` (и `--spravka`), или прочети реда направо |
 | `koya_sluzhba.py --sluzhba` / `--sod` / `--obshtina` | `raioni` със `sluzhba`, `sod` или `obshtina` | най-много 120 реда на извикване |
 | `koya_sluzhba.py --tekst` (текстът на заповедта) | `raioni` с `tekst` | обекти, км на АМ, включвания и изключвания |
+| `voda.py masto` / `sluzhba` / `statistika` | `voda` с `action` и `name` (и `obshtina`) | отговорът е като на скрипта с `--json`; за място на хидрант се дават само точните (`tochni_koordinati: true`) |
+| `voda.py blizo` | `voda` с `action: "blizo"` и `lat`, `lon` (или `masto`) | `broi` до 25; разстоянието е по права линия |
+| `voda.py dobavi` / `potvardi` / `promeni` | `voda_save` с `action` и същите полета (`promeni` – `id` и `set`) | всеки може да записва; първо с `dry_run: true`; координатите са само от потребителя |
 | `obraztsi.py index` / `get` | `samples` с `kind: "spravka"` или `"eptz"` и `name` | започни с `name: "INDEX.md"`, после избрания файл |
 | `regs.py index` | `regs_list` с `name: "_INDEX_"`, после `regs_read` | индексът е голям – чети го с `match`, не целия |
 | `regs.py get ФАЙЛ` | `regs_list` (за `id`) → `regs_read` с `heading: "Чл. 5"` или `match: "текст"` | цитирай дословно от върнатото |
@@ -44,8 +47,8 @@
 
 ## Какво не работи в този режим
 
-- **Водоизточниците** (`voda.py`, скил `vodoiztochnitsi`) – засега нямат инструмент в конектора.
-  Кажи го с едно изречение и не давай места на хидранти по памет.
+- **Файл за карта (`.kml`)** на водоизточниците – `voda.py eksport` иска цялата таблица. Дай
+  линковете за навигация в чата.
 - **Графика, карта и `.xlsx`** в `tarsene-proizshestviya` – скриптовете им искат файл със
   записите. Кажи го с едно изречение и дай таблицата и числата в чата.
 - **Периоди с над 200 записа като списък** – дай броя (`total`) и разпределение с
