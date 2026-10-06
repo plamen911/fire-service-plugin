@@ -39,7 +39,8 @@ data.json (всичко извън "kind", "tema", "tsel" и "izlozhenie" има
   ],
   "tema2": {"uprazhnenie": "1.1"},                                   // "oc": упражнение от data/uprazhneniya.json
         // или изцяло свой текст: {"tekst": "…", "tsel_uvod": "…", "tsel": ["…"], "materialno": "…"}
-        // по желание: "opisanie": ["ред от описанието на упражнението по методиката", …]
+        // по желание: "opisanie": true – описанието, скалата за резултата и забележката от методиката;
+        //             или "opisanie": ["свой ред", …]
   "izgotvil": {"date": "20.10.2026 г.", "lines": ["ИНСПЕКТОР В", "ГРУПА „ОПЕРАТИВЕН ЦЕНТЪР“"],
                "name": "инспектор Иван Петров"}
 }
@@ -84,12 +85,35 @@ def exercises():
     def deref(v):
         return d[v[1:]] if isinstance(v, str) and v.startswith("@") else v
     for ex in d["uprazhneniya"].values():
-        ex["tsel"], ex["materialno"] = deref(ex["tsel"]), deref(ex["materialno"])
+        for key in ("tsel_uvod", "tsel", "materialno"):
+            ex[key] = deref(ex[key])
     return d
 
 
 def exercise_text(number, ex, metodika):
     return f"Проиграване на Упражнение № {number} „{ex['ime']}“ от {metodika}."
+
+
+def norm_text(ex):
+    """„6 точки ≤ 65 секунди; …; 0 точки > 80 секунди“ or „най-много 6 точки по картата …“."""
+    if ex.get("normativ"):
+        steps = sorted(ex["normativ"], key=lambda s: s["do_sek"])
+        return "; ".join(f"{s['tochki']} точки ≤ {s['do_sek']} секунди" for s in steps) + f"; 0 точки > {steps[-1]['do_sek']} секунди"
+    if ex.get("max_tochki"):
+        return f"до {ex['max_tochki']} точки по картата за отчитане на резултатите"
+    return ""
+
+
+def exercise_description(number, ex):
+    """The exercise as the methodology describes it: numbered steps, the result scale, the note."""
+    if not ex or not ex.get("opisanie"):
+        return []
+    lines = [f"Упражнение № {number} „{ex['ime']}“"] + [f"{i}. {t}" for i, t in enumerate(ex["opisanie"], 1)]
+    if norm_text(ex):
+        lines.append("Резултат: " + norm_text(ex) + ".")
+    if ex.get("zabelezhka"):
+        lines.append("Забележка: " + ex["zabelezhka"])
+    return lines
 
 
 def field(doc, label, value, roman=None):
@@ -222,8 +246,6 @@ def build(d, out, base):
             if ex is None:
                 bad(f"няма упражнение „{number}“ в data/uprazhneniya.json – налични: "
                     + ", ".join(ex_data["uprazhneniya"]) + '; подай "tema2" със свой текст ("tekst", "tsel")')
-            if ex.get("ime_za_proverka"):
-                warnings.append(f"името на упражнение {number} е по одобрен план-конспект – свери го с методиката")
         text2 = t2.get("tekst") or exercise_text(number, ex, ex_data["metodika"])
         field(doc, "ТЕМА 2", text2)
         goals = t2.get("tsel") or ex.get("tsel") or []
@@ -235,9 +257,12 @@ def build(d, out, base):
         field(doc, "МЯСТО", (t2.get("myasto") or place.rstrip(";") + (" или прилежащи към тях площи" if many else " или прилежащи към нея площи")) + ";")
         field(doc, "УЧАСТВАЩИ", (t2.get("uchastvashti") or people).rstrip(";.") + ".")
         field(doc, "МАТЕРИАЛНО ОСИГУРЯВАНЕ", t2.get("materialno") or ex.get("materialno") or "")
-        if t2.get("opisanie"):
+        lines = t2.get("opisanie")
+        if lines is True:                                   # the description from the methodology
+            lines = exercise_description(number, ex)
+        if lines:
             B.blank(doc)
-            for line in t2["opisanie"]:
+            for line in lines:
                 B.para(doc, line)
     else:
         subtitle = [s.format(year=year) for s in SEMINAR_SUBTITLE]
