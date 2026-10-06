@@ -5,7 +5,8 @@ voda.py — водоизточниците за пожарогасене в ра
 водоеми, смукателни точки. Къде са, колко точни са координатите им, кои са най-близо.
 
 Таблицата (`vodoiztochnitsi.csv`) не е в пакета – пази се в Google Drive и се чете през n8n с
-личния ключ (кешира се за 10 минути). Без ключ скриптът спира с `NO_KEY`.
+личния ключ (кешира се за 10 минути). Без ключ скриптът спира с `NO_KEY` – тогава данните идват
+от инструментите `voda` и `voda_save` на конектора Fire Service (`_shared/connector.md`).
 
     python3 _shared/scripts/voda.py masto Биволаре                  # водоизточниците в населено място
     python3 _shared/scripts/voda.py masto Искър --obshtina Гулянци  # когато името се повтаря
@@ -16,12 +17,16 @@ voda.py — водоизточниците за пожарогасене в ра
     python3 _shared/scripts/voda.py statistika                      # колко са, с какви координати, къде няма
     python3 _shared/scripts/voda.py eksport --masto Рибен --format kml -o ribn.kml   # за карта в телефона
 
-Запис (засега само с администраторски ключ – n8n отказва на останалите с FORBIDDEN):
+Запис (всеки с личен ключ; промяната се прилага на сървъра върху текущата таблица):
     python3 _shared/scripts/voda.py dobavi --masto Биволаре --vid хидрант --tip надземен --lat 43.4852 --lon 24.5591 \
         --orientir "пред кметството"
     python3 _shared/scripts/voda.py potvardi 03993-001 --link "https://maps.google.com/?q=43.4852,24.5591"
     python3 _shared/scripts/voda.py promeni 03993-001 sastoyanie=неизправен belezhka="без капак"
 Всяка от трите приема --dry-run (само показва какво би записала).
+
+Администраторът, когато излезе нова заповед за районите на действие:
+    python3 _shared/scripts/voda.py mesta -o vodoiztochnitsi_mesta.csv   # населените места за сървъра
+    python3 tools/admin.py files put raioni vodoiztochnitsi_mesta.csv
 
 Точност на координатите (колона `tochnost`):
     проверена – снета на място при хидранта;        вик – от списъка на „ВиК“ ЕООД – Плевен;
@@ -34,7 +39,6 @@ voda.py — водоизточниците за пожарогасене в ра
 import argparse
 import csv
 import datetime
-import hashlib
 import io
 import json
 import math
@@ -107,7 +111,7 @@ class Store:
 
     def _remote(self, fresh):
         if not api_config.has_key():
-            raise Problem(api_config.NO_KEY + " – засега водоизточниците се четат само с личен ключ")
+            raise Problem(api_config.NO_KEY + " – инструментите voda и voda_save")
         if not fresh:
             try:
                 if time.time() - os.path.getmtime(self.cache) < CACHE_SECONDS:
@@ -151,21 +155,38 @@ class Store:
             with open(self.path, "w", encoding="utf-8", newline="") as f:
                 f.write(text)
             return {"where": self.path}
-        body = {"action": "put", "kind": KIND, "name": TABLE, "text": text,
-                "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()}
+        raise Problem("BUG: the table behind n8n is changed one water source at a time (see remote_write)")
+
+    def forget(self):
+        """Drop the cached copy after a change on the server."""
         try:
-            with urllib.request.urlopen(api_config.request("samples_url", body), timeout=120) as r:
-                res = json.load(r)
-        except urllib.error.HTTPError as e:
-            msg = e.read().decode(errors="ignore")[:300]
-            if e.code in (401, 403) or "FORBIDDEN" in msg:
-                raise Problem("FORBIDDEN: засега таблицата с водоизточниците записва само администраторът – "
-                              "предай му данните за точката")
-            raise Problem(f"N8N_UNAVAILABLE: HTTP {e.code} {msg}")
-        except (OSError, ValueError) as e:
-            raise Problem(f"N8N_UNAVAILABLE: {type(e).__name__}: {e}"[:300])
-        self._keep(text)
-        return {"where": "Google Drive", "updated_by": res.get("updated_by"), "modified_at": res.get("modified_at")}
+            os.remove(self.cache)
+        except OSError:
+            pass
+
+
+def remote_write(a, store, body):
+    """One change, applied by n8n to the current table (any active key may write)."""
+    body = {k: v for k, v in body.items() if v not in ("", None, False)}
+    try:
+        with urllib.request.urlopen(api_config.request("voda_url", body), timeout=120) as r:
+            res = json.load(r)
+    except urllib.error.HTTPError as e:
+        raw = e.read().decode(errors="ignore")
+        try:
+            msg = str(json.loads(raw).get("error") or raw)
+        except ValueError:
+            msg = raw
+        if e.code in (401, 403) and "UNAUTHORIZED" in msg:
+            raise Problem(f"KEY_REJECTED: n8n не приема личния ключ – {msg}"[:300])
+        raise Problem(msg[:400] if re.match(r"^[A-Z_]+:", msg) else f"N8N_UNAVAILABLE: HTTP {e.code} {msg}"[:300])
+    except (OSError, ValueError) as e:
+        raise Problem(f"N8N_UNAVAILABLE: {type(e).__name__}: {e}"[:300])
+    store.forget()
+    v = {k: ("" if x is None else x) for k, x in (res.get("vodoiztochnik") or {}).items()}
+    what = {"dobaven": "Добавен", "obnoven": "Вече има водоизточник на това място – обновен е", "potvarden": "Потвърден на място",
+            "promenen": "Променен", "bez_promyana": "Без промяна"}.get(res.get("deystvie"), str(res.get("deystvie")))
+    emit(a, res, f"{what}: {describe(v)}" + (" (проба – нищо не е записано)" if res.get("dry_run") else ""))
 
 
 def order(rows):
@@ -454,8 +475,13 @@ def finish(a, store, rows, obj, text):
 
 
 def cmd_dobavi(a, store):
-    s = settlement(a.masto, a.obshtina)
     p = check_point(origin_of(a))
+    if not store.path:
+        return remote_write(a, store, {"action": "dobavi", "masto": a.masto, "obshtina": a.obshtina, "vid": a.vid, "tip": a.tip,
+                                       "lat": p[0], "lon": p[1], "diametar": a.diametar, "ulitsa": a.ulitsa, "orientir": a.orientir,
+                                       "sastoyanie": a.sastoyanie, "belezhka": a.belezhka, "vapreki": a.vapreki,
+                                       "dry_run": a.dry_run, "proveril": a.proveril})
+    s = settlement(a.masto, a.obshtina)
     centre = centres().get(s["ekatte"])
     if centre and metres(centre, p) > FAR_KM * 1000 and not a.vapreki:
         raise Problem(f"TOO_FAR: точката е на {metres(centre, p) / 1000:.1f} km от центъра на {place_name(s)} – "
@@ -495,9 +521,12 @@ def find(rows, ident):
 
 
 def cmd_potvardi(a, store):
+    p = check_point(origin_of(a))
+    if not store.path:
+        return remote_write(a, store, {"action": "potvardi", "id": a.id, "lat": p[0], "lon": p[1], "sastoyanie": a.sastoyanie,
+                                       "dry_run": a.dry_run, "proveril": a.proveril})
     rows = store.rows(fresh=True)
     r = find(rows, a.id)
-    p = check_point(origin_of(a))
     old = point(r)
     moved = round(metres(old, p)) if old else None
     r.update(lat=f"{p[0]:.7f}", lon=f"{p[1]:.7f}", tochnost="проверена", proveren_na=today(), proveril=who(a, store) or r["proveril"])
@@ -508,15 +537,20 @@ def cmd_potvardi(a, store):
 
 
 def cmd_promeni(a, store):
-    rows = store.rows(fresh=True)
-    r = find(rows, a.id)
-    changed = {}
+    pairs = {}
     for item in a.fields:
         k, sep, v = item.partition("=")
         k, v = k.strip(), v.strip()
         if not sep or k not in EDITABLE:
             raise Problem(f"BAD_INPUT: „{item}“ – очаква се поле=стойност; полета: " + ", ".join(EDITABLE)
                           + " (координатите се сменят с potvardi)")
+        pairs[k] = v
+    if not store.path:
+        return remote_write(a, store, {"action": "promeni", "id": a.id, "set": pairs, "dry_run": a.dry_run})
+    rows = store.rows(fresh=True)
+    r = find(rows, a.id)
+    changed = {}
+    for k, v in pairs.items():
         if k == "vid" and v not in VID:
             raise Problem("BAD_INPUT: vid е едно от: " + ", ".join(VID))
         if k == "tip" and v not in TIP:
@@ -527,6 +561,23 @@ def cmd_promeni(a, store):
     if not changed:
         return emit(a, {"deystvie": "bez_promyana", "vodoiztochnik": public(r)}, f"Без промяна: {describe(r)}")
     finish(a, store, rows, {"deystvie": "promenen", "promeni": changed, "vodoiztochnik": public(r)}, f"Променен: {describe(r)}")
+
+
+def cmd_mesta(a, store):
+    """The settlements of РДПБЗН – Плевен with their service and centre: what n8n checks a new point against."""
+    c = centres()
+    places = sorted((s for s in koya_sluzhba.load() if s["rdpbzn"] == PLEVEN), key=lambda s: s["ekatte"])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(["ekatte", "vid", "naseleno_masto", "obshtina", "sluzhba", "uchastak", "lat", "lon"])
+    for s in places:
+        p = c.get(s["ekatte"])
+        w.writerow([s["ekatte"], s["vid"], s["naseleno_masto"], s["obshtina"], s["sluzhba"], s["uchastak"],
+                    f"{p[0]:.5f}" if p else "", f"{p[1]:.5f}" if p else ""])
+    with open(a.out, "w", encoding="utf-8", newline="") as f:
+        f.write(buf.getvalue())
+    emit(a, {"file": a.out, "broi": len(places), "bez_tsentar": sum(1 for s in places if s["ekatte"] not in c)},
+         f"{a.out}: {len(places)} населени места")
 
 
 def main():
@@ -562,12 +613,13 @@ def main():
     p = sub.add_parser("potvardi", parents=[common, where, write]); p.add_argument("id"); p.add_argument("--sastoyanie", default="")
     p = sub.add_parser("promeni", parents=[common, write]); p.add_argument("id")
     p.add_argument("fields", nargs="+", metavar="поле=стойност")
+    p = sub.add_parser("mesta", parents=[common]); p.add_argument("-o", "--out", required=True)
     a = ap.parse_args()
     if a.csv:
         os.environ["FIRE_SERVICE_VODA_CSV"] = a.csv
     try:
         {"masto": cmd_masto, "sluzhba": cmd_sluzhba, "blizo": cmd_blizo, "statistika": cmd_statistika,
-         "eksport": cmd_eksport, "dobavi": cmd_dobavi, "potvardi": cmd_potvardi, "promeni": cmd_promeni}[a.cmd](a, Store(a.csv))
+         "eksport": cmd_eksport, "mesta": cmd_mesta, "dobavi": cmd_dobavi, "potvardi": cmd_potvardi, "promeni": cmd_promeni}[a.cmd](a, Store(a.csv))
     except Problem as e:
         print(str(e), file=sys.stderr)
         sys.exit(2)
