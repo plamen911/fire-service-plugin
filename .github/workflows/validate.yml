@@ -10,5 +10,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install python-docx openpyxl lxml pillow
+      - run: pip install python-docx openpyxl lxml pillow python-pptx
       - run: python3 tools/validate.py
