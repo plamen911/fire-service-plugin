@@ -42,7 +42,7 @@ except ImportError:  # pragma: no cover
     sys.exit("MISSING_DEPENDENCY: pip install openpyxl")
 
 HEADER_FILL = PatternFill("solid", fgColor="D9D9D9")
-BOLD = Font(bold=True)
+BOLD = Font(bold=False)   # no bold in generated documents (_shared/conventions.md)
 COLUMNS = [
     ("Дата и час", 17, lambda r: (lambda t: f"{t:%d.%m.%Y %H:%M}" if t else "")(st.signal_time(r))),
     ("№ на телефонограмата", 12, lambda r: st.clean(r.get("num_event"))),

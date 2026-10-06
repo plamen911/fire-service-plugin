@@ -67,7 +67,7 @@ def run(p, text, size=9.5, bold=False, italic=False, color=None):
     r = p.add_run(text)
     r.font.name = FONT
     r._element.rPr.rFonts.set(qn("w:cs"), FONT); r._element.rPr.rFonts.set(qn("w:eastAsia"), FONT)
-    r.font.size = Pt(size); r.bold = bold; r.italic = italic
+    r.font.size = Pt(size); r.bold = None; r.italic = italic  # no bold in generated documents (_shared/conventions.md); the argument is kept for the callers
     if color:
         r.font.color.rgb = RGBColor.from_string(color)
     return r
@@ -180,9 +180,6 @@ def body(doc, lines):
         elif ln.startswith("- "):
             p = para(doc, 0.5, left=0.35); p.paragraph_format.first_line_indent = Cm(-0.3)
             inline(p, "• " + ln[2:], 10 if zone else 9)
-            if zone and not ln.startswith(("- „", "- За изолирането")) and re.search(r"изолирайте|защитете|евакуация", ln.lower()):
-                for r_ in p.runs:
-                    r_.bold = True
         elif ln.startswith("> "):
             p = para(doc, 2, left=0.35); run(p, ln[2:], size=9.5, bold=True)
         elif ln.startswith("_") and ln.endswith("_"):
