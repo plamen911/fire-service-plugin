@@ -80,6 +80,11 @@ def test_oc():
     check(len(d.inline_shapes) == 1 and info["figuri"] == 1 and "Фиг. 1. Проба" in text, "one figure with a caption")
     check(info["preduprezhdeniya"] == [], "no warnings")
     check(no_bold(out), "no bold anywhere in the document")
+    data["tema2"] = {"uprazhnenie": "2.13 А", "opisanie": True}
+    r, out = run("build_konspekt.py", data, tmp)
+    text = doc_text(out)[0] if r.returncode == 0 else ""
+    check("Действия с хидравличен спасителен комплект" in text and "Резултат: до 6 точки по картата" in text,
+          "exercise description and result scale from the methodology")
     data["tema2"] = {"uprazhnenie": "9.99"}
     r, _ = run("build_konspekt.py", data, tmp)
     check(r.returncode != 0 and "BAD_INPUT" in r.stderr, "unknown exercise is refused")
@@ -121,8 +126,17 @@ def test_otchet():
         check("Екз. № 1 – деловодство" in text and "Инспектор IV ст. в група ОЦ" in text, "footer block")
         check(no_bold(out), "no bold anywhere in the document")
     del data["zvena"][0]["tochki"]
+    r, out = run("build_otchet.py", data, tmp)
+    check(r.returncode == 0 and "е 72 сек., което е за 4 точки." in doc_text(out)[0], "points from the norm of exercise 1.1")
+    data["zvena"][0]["sekundi"] = 81
+    r, out = run("build_otchet.py", data, tmp)
+    check(r.returncode == 0 and "е 81 сек., което е за 0 точки." in doc_text(out)[0], "slower than the norm → 0 points")
+    data["tema2"] = {"uprazhnenie": "2.8"}
     r, _ = run("build_otchet.py", data, tmp)
-    check(r.returncode != 0 and "NO_NORM" in r.stderr, "seconds without a norm → NO_NORM")
+    check(r.returncode != 0 and "NO_NORM" in r.stderr, "seconds for an exercise without a time norm → NO_NORM")
+    data["zvena"][0] = {"zveno": "РСПБЗН – Левски", "prisastvali": 3, "tochki": 7}
+    r, _ = run("build_otchet.py", data, tmp)
+    check(r.returncode != 0 and "BAD_INPUT" in r.stderr, "more points than the card allows are refused")
     from build_otchet import points
     norm = [{"do_sek": 60, "tochki": 6}, {"do_sek": 75, "tochki": 4}]
     check(points(norm, 60) == 6 and points(norm, 72) == 4 and points(norm, 90) == 0, "points by a norm table")

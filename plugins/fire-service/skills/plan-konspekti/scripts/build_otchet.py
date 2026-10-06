@@ -23,10 +23,12 @@ data.json:
 Резултат за едно звено – по реда на предимство:
   "rezultat"            свободен текст (едно изречение);
   "sekundi" + "tochki"  „… е 72 сек., което е за 4 точки.“;
-  "sekundi"             точките се смятат по норматива на упражнението, ако го има в
-                        data/uprazhneniya.json ("normativ"); без норматив скриптът спира с NO_NORM –
-                        тогава попитай потребителя за точките;
-  "tochki"              „При изпълнение на упражнението служителите постигнаха N точки.“
+  "sekundi"             упражнение за време (Приложение № 1 на методиката): точките се смятат по
+                        норматива му в data/uprazhneniya.json; за упражнение без норматив (за правилно
+                        изпълнение или със свой текст) скриптът спира с NO_NORM – попитай за точките;
+  "tochki"              упражнение за правилно изпълнение (Приложение № 2): „При изпълнение на
+                        упражнението служителите постигнаха N точки.“; повече от най-многото по
+                        картата на упражнението се отказва
 
 Скриптът отпечатва JSON {"output", "zvena", "preduprezhdeniya"}.
 
@@ -51,7 +53,7 @@ def bad(msg):
 
 def points(norm, seconds):
     """norm: [{"do_sek": 60, "tochki": 6}, …] ascending by do_sek; slower than the last → 0."""
-    for step in sorted(norm, key=lambda s: s["do_sek"]):
+    for step in sorted(norm, key=lambda s: s["do_sek"]):   # the best score first: ≤ 65 s → 6 points
         if seconds <= step["do_sek"]:
             return step["tochki"]
     return 0
@@ -62,7 +64,8 @@ def num(v):
     return str(int(f)) if f == int(f) else str(f).replace(".", ",")
 
 
-def result_sentence(z, norm, number):
+def result_sentence(z, ex, number):
+    norm = (ex or {}).get("normativ")
     if str(z.get("rezultat") or "").strip():
         return str(z["rezultat"]).strip()
     sec, pts = z.get("sekundi"), z.get("tochki")
@@ -71,6 +74,9 @@ def result_sentence(z, norm, number):
             sys.exit(f"NO_NORM: за упражнение {number or '(свой текст)'} няма норматив в data/uprazhneniya.json – "
                      f"подай \"tochki\" за {z.get('zveno')}")
         pts = points(norm, float(sec))
+    top = (ex or {}).get("max_tochki") or (6 if (ex or {}).get("normativ") else None)
+    if pts is not None and top is not None and float(pts) > top:
+        bad(f"за {z.get('zveno')}: {num(pts)} точки са повече от най-многото за упражнение {number} ({top})")
     if sec is not None:
         return f"Резултатът при проиграване на поставеното упражнение е {num(sec)} сек., което е за {num(pts)} точки."
     if pts is not None:
@@ -122,7 +128,7 @@ def build(d, out):
         B.para(doc, f"ТЕМА 2 (практика): {text2}")
         word = "служител" if int(present) == 1 else "служители"
         B.para(doc, f"ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: {int(present)} {word} от състава на дежурната смяна.")
-        B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, (ex or {}).get('normativ'), number)}")
+        B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, ex, number)}")
     B.blank(doc, 3)
     position = sign.get("position") or ""
     name = sign.get("name") or B.PLACEHOLDER_NAME
