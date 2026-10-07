@@ -24,6 +24,11 @@ voda.py — водоизточниците за пожарогасене в ра
     python3 _shared/scripts/voda.py promeni 03993-001 sastoyanie=неизправен belezhka="без капак"
 Всяка от трите приема --dry-run (само показва какво би записала).
 
+Сверка с карта в Google My Maps (точките в нея са снети на място; името на точката е населеното място):
+    python3 _shared/scripts/voda.py karta --link "https://www.google.com/maps/d/viewer?mid=…"   # само показва разликите
+    python3 _shared/scripts/voda.py karta --kml karta.kml --proveril "Име Фамилия" --zapishi     # записва новите
+Картата се сваля направо само ако е споделена „всеки с връзката“; иначе – от свален от нея .kml/.kmz файл.
+
 Администраторът, когато излезе нова заповед за районите на действие:
     python3 _shared/scripts/voda.py mesta -o vodoiztochnitsi_mesta.csv   # населените места за сървъра
     python3 tools/admin.py files put raioni vodoiztochnitsi_mesta.csv
@@ -39,6 +44,8 @@ voda.py — водоизточниците за пожарогасене в ра
 import argparse
 import csv
 import datetime
+import contextlib
+import html
 import io
 import json
 import math
@@ -49,6 +56,8 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
+import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -563,6 +572,144 @@ def cmd_promeni(a, store):
     finish(a, store, rows, {"deystvie": "promenen", "promeni": changed, "vodoiztochnik": public(r)}, f"Променен: {describe(r)}")
 
 
+# ── a Google My Maps map as a source ───────────────────────────────────────────────────────
+def map_text(a):
+    """The KML of the map: from a .kml/.kmz file, or downloaded when the map is shared by link."""
+    if a.kml:
+        try:
+            with open(a.kml, "rb") as f:
+                raw = f.read()
+        except OSError as e:
+            raise Problem(f"NO_DATA: {e}")
+    elif a.link:
+        m = re.search(r"mid=([A-Za-z0-9_-]{10,})", a.link) or re.match(r"^\s*([A-Za-z0-9_-]{20,})\s*$", a.link)
+        if not m:
+            raise Problem("BAD_INPUT: в --link няма номер на карта (mid=…) – дай линка за преглед на картата")
+        url = f"https://www.google.com/maps/d/kml?mid={m.group(1)}&forcekml=1"
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=60) as r:
+                raw = r.read()
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403, 404):
+                raise Problem("MAP_PRIVATE: картата не се отваря без вход – не е споделена „всеки с връзката може да "
+                              "преглежда“. Или собственикът ѝ да я сподели така, или я свали като KML "
+                              "(меню ⋮ → „Експортиране в KML/KMZ“) и дай файла с --kml")
+            raise Problem(f"MAP_UNAVAILABLE: HTTP {e.code}")
+        except OSError as e:
+            raise Problem(f"MAP_UNAVAILABLE: {type(e).__name__}: {e}"[:300])
+    else:
+        raise Problem("BAD_INPUT: дай --link (линк към картата) или --kml (свален от нея файл)")
+    if raw[:2] == b"PK":  # .kmz
+        try:
+            with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                raw = z.read(next(n for n in z.namelist() if n.lower().endswith(".kml")))
+        except (zipfile.BadZipFile, StopIteration, KeyError):
+            raise Problem("BAD_INPUT: файлът не е .kmz с карта вътре")
+    if b"<kml" not in raw[:2000]:
+        raise Problem("MAP_PRIVATE: вместо карта дойде страница за вход – картата не е споделена „всеки с връзката“; "
+                      "свали я като KML и дай файла с --kml")
+    return raw
+
+
+def map_points(raw):
+    """[{masto, tip, belezhka, lat, lon, sloy}] – one per placemark with a point."""
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError as e:
+        raise Problem(f"BAD_INPUT: файлът не се чете като KML – {e}")
+    for el in root.iter():
+        el.tag = el.tag.rsplit("}", 1)[-1]
+    out = []
+
+    def walk(node, layer):
+        for el in node:
+            if el.tag in ("Folder", "Document"):
+                walk(el, (el.findtext("name") or "").strip() if el.tag == "Folder" else layer)
+            elif el.tag == "Placemark":
+                c = (el.findtext("Point/coordinates") or "").strip().split(",")
+                try:
+                    lon, lat = float(c[0]), float(c[1])
+                except (ValueError, IndexError):
+                    continue
+                desc = el.findtext("description") or ""
+                photo = "<img" in desc.lower()
+                text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]*>", " ", desc))).strip()
+                low = text.lower()
+                tip = "подземен" if "подземен" in low else "надземен" if "надземен" in low else "стенен" if "стенен" in low else ""
+                note = re.sub(r"(?i)\b(пожарен|хидрант|надземен|подземен|стенен)\b", " ", text)
+                note = re.sub(r"\s+", " ", note).strip(" .,;:!()-–").strip()
+                if not tip and photo and not note:
+                    note = "типът не е посочен в картата (само снимка)"
+                out.append({"masto": (el.findtext("name") or "").strip(), "tip": tip, "belezhka": note[:1].lower() + note[1:],
+                            "lat": lat, "lon": lon, "sloy": layer})
+    walk(root, "")
+    return out
+
+
+def cmd_karta(a, store):
+    """Compare a map of on-site checked points with the table; with --zapishi add the new ones."""
+    pts = map_points(map_text(a))
+    if not pts:
+        raise Problem("NO_DATA: в картата няма точки")
+    rows = store.rows(fresh=True)
+    exact = [r for r in rows if point(r) and r["tochnost"] in EXACT]
+    new, known, unknown, places = [], 0, [], {}
+    for m in pts:
+        p = (m["lat"], m["lon"])
+        try:
+            s = settlement(m["masto"], a.obshtina)
+            check_point(p)
+        except Problem as e:
+            unknown.append(dict(m, prichina=str(e)))
+            continue
+        places[s["ekatte"]] = place_name(s)
+        if any(metres(p, point(r)) <= SAME_M for r in exact):
+            known += 1
+        else:
+            new.append(dict(m, naseleno_masto=place_name(s), navigatsiya=link(p)))
+    # checked-on-site points of the same settlements that the map no longer has
+    gone = [public(r) for r in exact if r["tochnost"] == "проверена" and r["ekatte"] in places
+            and not any(metres(point(r), (m["lat"], m["lon"])) <= SAME_M for m in pts)]
+    done, failed = [], []
+    if a.zapishi:
+        for m in new:
+            ns = argparse.Namespace(json=True, csv=a.csv, lat=m["lat"], lon=m["lon"], link=None, dry_run=a.dry_run,
+                                    proveril=a.proveril, masto=m["masto"], obshtina=a.obshtina, vid="хидрант", tip=m["tip"],
+                                    diametar="", ulitsa="", orientir="", sastoyanie="", belezhka=m["belezhka"], vapreki=False)
+            buf = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(buf):
+                    cmd_dobavi(ns, store)
+                done.append(json.loads(buf.getvalue())["vodoiztochnik"])
+            except (Problem, ValueError, KeyError) as e:
+                failed.append(dict(m, prichina=str(e)))
+            if not store.path and not a.dry_run:
+                time.sleep(1.2)  # two writes in the same second may overlap on the server
+    obj = {"tochki_v_kartata": len(pts), "veche_v_tablitsata": known, "novi": new, "nepoznati": unknown,
+           "nyama_gi_v_kartata": gone, "zapisani": done, "nezapisani": failed, "zapis": bool(a.zapishi),
+           "dry_run": bool(a.dry_run)}
+    lines = [f"Картата: {len(pts)} точки – {known} вече са в таблицата, {len(new)} нови"
+             + (f", {len(unknown)} неразпознати" if unknown else "")]
+    by = {}
+    for m in new:
+        by.setdefault(m["naseleno_masto"], []).append(m)
+    for name in sorted(by):
+        lines.append(f"  {name}: {len(by[name])} нови")
+        lines += [f'    {m["tip"] or "без посочен тип"} | {m["lat"]:.7f}, {m["lon"]:.7f}' + (f' | {m["belezhka"]}' if m["belezhka"] else "")
+                  for m in by[name]]
+    lines += [f'  неразпозната: „{m["masto"]}“ {m["lat"]}, {m["lon"]} – {m["prichina"]}' for m in unknown]
+    if gone:
+        lines.append(f"В таблицата има {len(gone)} проверени на място точки в същите населени места, които ги няма в картата "
+                     "(не се пипат): " + ", ".join(v["id"] for v in gone))
+    if a.zapishi:
+        lines.append(f"Записани: {len(done)}" + (" (проба – нищо не е записано)" if a.dry_run else "")
+                     + (f"; незаписани: {len(failed)}" if failed else ""))
+        lines += [f'  не се записа: {m["masto"]} {m["lat"]}, {m["lon"]} – {m["prichina"]}' for m in failed]
+    elif new:
+        lines.append("Нищо не е записано – за запис добави --zapishi.")
+    emit(a, obj, "\n".join(lines))
+
+
 def cmd_mesta(a, store):
     """The settlements of РДПБЗН – Плевен with their service and centre: what n8n checks a new point against."""
     c = centres()
@@ -614,12 +761,15 @@ def main():
     p = sub.add_parser("promeni", parents=[common, write]); p.add_argument("id")
     p.add_argument("fields", nargs="+", metavar="поле=стойност")
     p = sub.add_parser("mesta", parents=[common]); p.add_argument("-o", "--out", required=True)
+    p = sub.add_parser("karta", parents=[common, write]); p.add_argument("--link", help="линк към картата в Google My Maps")
+    p.add_argument("--kml", metavar="ФАЙЛ", help="свален от картата .kml или .kmz файл"); p.add_argument("--obshtina")
+    p.add_argument("--zapishi", action="store_true", help="записва новите точки (без него само показва разликите)")
     a = ap.parse_args()
     if a.csv:
         os.environ["FIRE_SERVICE_VODA_CSV"] = a.csv
     try:
         {"masto": cmd_masto, "sluzhba": cmd_sluzhba, "blizo": cmd_blizo, "statistika": cmd_statistika,
-         "eksport": cmd_eksport, "mesta": cmd_mesta, "dobavi": cmd_dobavi, "potvardi": cmd_potvardi, "promeni": cmd_promeni}[a.cmd](a, Store(a.csv))
+         "eksport": cmd_eksport, "mesta": cmd_mesta, "karta": cmd_karta, "dobavi": cmd_dobavi, "potvardi": cmd_potvardi, "promeni": cmd_promeni}[a.cmd](a, Store(a.csv))
     except Problem as e:
         print(str(e), file=sys.stderr)
         sys.exit(2)
