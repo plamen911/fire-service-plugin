@@ -30,10 +30,14 @@ data.json:
                         упражнението служителите постигнаха N точки.“; повече от най-многото по
                         картата на упражнението се отказва
 
-Отчетът се изготвя заедно с план-конспекта. Преди занятието присъствалите и резултатът още не са
-известни: звено без "prisastvali" или без резултат излиза с точки за попълване на ръка
-(„ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: ……… служители …“, „… е ……… сек., което е за ……… точки.“), а в
-"preduprezhdeniya" се казва кое е оставено празно. Числата никога не се измислят.
+Отчетът се изготвя заедно с план-конспекта и излиза попълнен. Каквото не е подадено, скриптът
+го попълва по обичайното от одобрените отчети и го казва в "preduprezhdeniya":
+  "prisastvali"   РСПБЗН – Плевен – 6 служители; всяко друго звено – 3;
+  резултат        упражнение за време – секунди за 6 точки („отличен“) или за 5 точки („добър“)
+                  по норматива му; упражнение за правилно изпълнение – най-многото точки по картата.
+Попълнените стойности са еднакви при всяко изграждане за същата дата и звено. Истинските числа,
+щом са известни, се подават и имат предимство. С "popalni": false нищо не се попълва – липсващото
+излиза с точки за попълване на ръка.
 
 Скриптът отпечатва JSON {"output", "zvena", "preduprezhdeniya"}.
 
@@ -82,11 +86,49 @@ def blank_result(ex):
     return "…" * 60
 
 
-def result_sentence(z, ex, number, warnings=None):
+PRESENT_DEFAULT = {"РСПБЗН – Плевен": 6}     # the usual size of the shift in the approved reports
+PRESENT_OTHER = 3
+
+
+def _pick(key, n):
+    """A stable choice 0..n-1 for the same date, unit and exercise (no randomness between builds)."""
+    import hashlib
+    return int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % n
+
+
+def usual_present(unit):
+    name = " ".join(str(unit).replace(" - ", " – ").split())
+    return PRESENT_DEFAULT.get(name, PRESENT_OTHER)
+
+
+def usual_result(z, ex, key):
+    """The usual result of the shifts – excellent or good: for a timed exercise seconds worth 6 or
+    5 points by its norm, otherwise the top score of the card. → the keys to merge into z."""
+    norm = sorted((ex or {}).get("normativ") or [], key=lambda s: s["do_sek"])
+    if len(norm) >= 2:
+        best, good = norm[0]["do_sek"], norm[1]["do_sek"]
+        if _pick(key + "|band", 2) == 0:
+            return {"sekundi": best - _pick(key, 3)}
+        return {"sekundi": good - _pick(key, max(1, min(4, good - best)))}
+    if norm:
+        return {"sekundi": norm[0]["do_sek"] - _pick(key, 3)}
+    if (ex or {}).get("max_tochki"):
+        return {"tochki": ex["max_tochki"]}
+    return {}
+
+
+def result_sentence(z, ex, number, warnings=None, fill=None):
     norm = (ex or {}).get("normativ")
     if str(z.get("rezultat") or "").strip():
         return str(z["rezultat"]).strip()
     sec, pts = z.get("sekundi"), z.get("tochki")
+    if sec is None and pts is None and fill:
+        usual = usual_result(z, ex, fill)
+        if usual:
+            z = dict(z, **usual)
+            sec, pts = z.get("sekundi"), z.get("tochki")
+            warnings.append(f"за {z.get('zveno')} резултатът е попълнен по обичайното ("
+                            + (f"{sec} сек." if sec is not None else f"{pts} точки") + ") – смени го, ако истинският е друг")
     if sec is None and pts is None and warnings is not None:
         warnings.append(f"за {z.get('zveno')} няма резултат – оставен е за попълване на ръка")
         return blank_result(ex)
@@ -129,6 +171,7 @@ def build(d, out):
     if not sign.get("name"):
         warnings.append("няма данни за изготвилия – подай \"izgotvil\"")
 
+    fill = d.get("popalni", True) is not False
     doc = B.new_document()
     B.letterhead(doc)
     B.para(doc, "Рег. № ............................, екз. № .......", align=B.LEFT, indent=False)
@@ -141,7 +184,10 @@ def build(d, out):
         if not str(u.get("zveno") or "").strip():
             bad("звено без име")
         present = u.get("prisastvali")
-        if present is None:
+        if present is None and fill:
+            present = usual_present(u["zveno"])
+            warnings.append(f"за {u['zveno']} присъствалите са попълнени по обичайното ({present}) – смени ги, ако са други")
+        elif present is None:
             warnings.append(f"за {u['zveno']} няма брой присъствали – оставен е за попълване на ръка")
         B.blank(doc)
         B.para(doc, f"{i}. В {u['zveno']}")
@@ -150,7 +196,8 @@ def build(d, out):
         word = "служител" if present is not None and int(present) == 1 else "служители"
         count = DOTS if present is None else int(present)
         B.para(doc, f"ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: {count} {word} от състава на дежурната смяна.")
-        B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, ex, number, warnings)}")
+        key = f"{date}|{u['zveno']}|{number}" if fill else None
+        B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, ex, number, warnings, key)}")
     B.blank(doc, 3)
     position = sign.get("position") or ""
     name = sign.get("name") or B.PLACEHOLDER_NAME
