@@ -125,6 +125,17 @@ def main():
     lines = open(TABLE, encoding="utf-8").read().splitlines()
     ok(lines[0].startswith("id,ekatte,naseleno_masto") and len(lines) == 8, len(lines))
     ok([x.split(",")[0] for x in lines[1:4]] == ["00004-001", "00004-002", "00004-003"], "подредба")
+    # премахване: иска причина; редът изчезва, останалите не се пипат
+    fresh()
+    r = run("premahni", "00001-004")
+    ok(r.returncode != 0 and "BAD_INPUT" in r.stderr, r.stderr)
+    d = out("premahni", "00001-004", "--prichina", "закрит", "--dry-run")
+    ok(d["deystvie"] == "premahnat" and d["dry_run"] is True and "00001-004" in open(TABLE, encoding="utf-8").read(), d)
+    d = out("premahni", "00001-004", "--prichina", "закрит")
+    text = open(TABLE, encoding="utf-8").read()
+    ok(d["vodoiztochnik"]["id"] == "00001-004" and "00001-004" not in text and len(text.splitlines()) == 6, d)
+    r = run("premahni", "00001-004", "--prichina", "закрит")
+    ok(r.returncode != 0 and "NOT_FOUND" in r.stderr, r.stderr)
     # сверка с карта (KML): познатите точки се прескачат, новите се показват и се записват само с --zapishi
     fresh()
     kml = os.path.join(TMP, "karta.kml")

@@ -22,7 +22,8 @@ voda.py — водоизточниците за пожарогасене в ра
         --orientir "пред кметството"
     python3 _shared/scripts/voda.py potvardi 03993-001 --link "https://maps.google.com/?q=43.4852,24.5591"
     python3 _shared/scripts/voda.py promeni 03993-001 sastoyanie=неизправен belezhka="без капак"
-Всяка от трите приема --dry-run (само показва какво би записала).
+    python3 _shared/scripts/voda.py premahni 03993-001 --prichina "закрит"   # администраторът или който го е въвел
+Всяка от четирите приема --dry-run (само показва какво би записала).
 
 Сверка с карта в Google My Maps (точките в нея са снети на място; името на точката е населеното място):
     python3 _shared/scripts/voda.py karta --link "https://www.google.com/maps/d/viewer?mid=…"   # само показва разликите
@@ -195,7 +196,7 @@ def remote_write(a, store, body):
     store.forget()
     v = {k: ("" if x is None else x) for k, x in (res.get("vodoiztochnik") or {}).items()}
     what = {"dobaven": "Добавен", "obnoven": "Вече има водоизточник на това място – обновен е", "potvarden": "Потвърден на място",
-            "promenen": "Променен", "bez_promyana": "Без промяна"}.get(res.get("deystvie"), str(res.get("deystvie")))
+            "promenen": "Променен", "bez_promyana": "Без промяна", "premahnat": "Премахнат"}.get(res.get("deystvie"), str(res.get("deystvie")))
     emit(a, res, f"{what}: {describe(v)}" + (" (проба – нищо не е записано)" if res.get("dry_run") else ""))
 
 
@@ -731,6 +732,19 @@ def cmd_karta(a, store):
     emit(a, obj, "\n".join(lines))
 
 
+def cmd_premahni(a, store):
+    """Remove a water source that no longer exists or was entered twice (never one that is merely out of order)."""
+    reason = (a.prichina or "").strip()
+    if len(reason) < 3:
+        raise Problem("BAD_INPUT: дай --prichina – защо се премахва (например „закрит“, „въведен два пъти“)")
+    if not store.path:
+        return remote_write(a, store, {"action": "premahni", "id": a.id, "prichina": reason, "dry_run": a.dry_run})
+    rows = store.rows(fresh=True)
+    r = find(rows, a.id)
+    rows.remove(r)
+    finish(a, store, rows, {"deystvie": "premahnat", "prichina": reason, "vodoiztochnik": public(r)}, f"Премахнат ({reason}): {describe(r)}")
+
+
 def cmd_mesta(a, store):
     """The settlements of РДПБЗН – Плевен with their service and centre: what n8n checks a new point against."""
     c = centres()
@@ -781,6 +795,8 @@ def main():
     p = sub.add_parser("potvardi", parents=[common, where, write]); p.add_argument("id"); p.add_argument("--sastoyanie", default="")
     p = sub.add_parser("promeni", parents=[common, write]); p.add_argument("id")
     p.add_argument("fields", nargs="+", metavar="поле=стойност")
+    p = sub.add_parser("premahni", parents=[common, write]); p.add_argument("id")
+    p.add_argument("--prichina", help="защо се премахва: закрит, въведен два пъти …")
     p = sub.add_parser("mesta", parents=[common]); p.add_argument("-o", "--out", required=True)
     p = sub.add_parser("karta", parents=[common, write]); p.add_argument("--link", help="линк към картата в Google My Maps")
     p.add_argument("--kml", metavar="ФАЙЛ", help="свален от картата .kml или .kmz файл"); p.add_argument("--obshtina")
@@ -791,7 +807,7 @@ def main():
         os.environ["FIRE_SERVICE_VODA_CSV"] = a.csv
     try:
         {"masto": cmd_masto, "sluzhba": cmd_sluzhba, "blizo": cmd_blizo, "statistika": cmd_statistika,
-         "eksport": cmd_eksport, "mesta": cmd_mesta, "karta": cmd_karta, "dobavi": cmd_dobavi, "potvardi": cmd_potvardi, "promeni": cmd_promeni}[a.cmd](a, Store(a.csv))
+         "eksport": cmd_eksport, "mesta": cmd_mesta, "karta": cmd_karta, "premahni": cmd_premahni, "dobavi": cmd_dobavi, "potvardi": cmd_potvardi, "promeni": cmd_promeni}[a.cmd](a, Store(a.csv))
     except Problem as e:
         print(str(e), file=sys.stderr)
         sys.exit(2)

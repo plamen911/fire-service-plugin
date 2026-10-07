@@ -30,7 +30,7 @@
 | `koya_sluzhba.py --tekst` (текстът на заповедта) | `raioni` с `tekst` | обекти, км на АМ, включвания и изключвания |
 | `voda.py masto` / `sluzhba` / `statistika` | `voda` с `action` и `name` (и `obshtina`) | отговорът е като на скрипта с `--json`; за място на хидрант се дават само точните (`tochni_koordinati: true`) |
 | `voda.py blizo` | `voda` с `action: "blizo"` и `lat`, `lon` (или `masto`) | `broi` до 25; разстоянието е по права линия |
-| `voda.py dobavi` / `potvardi` / `promeni` | `voda_save` с `action` и същите полета (`promeni` – `id` и `set`) | всеки може да записва; първо с `dry_run: true`; координатите са само от потребителя |
+| `voda.py dobavi` / `potvardi` / `promeni` / `premahni` | `voda_save` с `action` и същите полета (`promeni` – `id` и `set`; `premahni` – `id` и `prichina`) | всеки може да записва; премахва администраторът или който е въвел точката; първо с `dry_run: true`; координатите са само от потребителя |
 | `obraztsi.py index` / `get` | `samples` с `kind: "spravka"` или `"eptz"` и `name` | започни с `name: "INDEX.md"`, после избрания файл |
 | `regs.py index` | `regs_list` с `name: "_INDEX_"`, после `regs_read` | индексът е голям – чети го с `match`, не целия |
 | `regs.py get ФАЙЛ` | `regs_list` (за `id`) → `regs_read` с `heading: "Чл. 5"` или `match: "текст"` | цитирай дословно от върнатото |
@@ -42,6 +42,7 @@
 | Действие | Инструмент | Как |
 |---|---|---|
 | запис на образец | `samples_save` | `obraztsi.py --store ПАПКА zapis …` (преди това запиши текущия `INDEX.md` от `samples` в `ПАПКА/<вид>/INDEX.md`) → `samples_save` за файла на образеца, после за `INDEX.md`, всеки със своя `sha256` (`sha256sum файл`) |
+| файл в нормативната база | `samples_save` | `kind`: `regs-a`, `regs-b`, `regs-c` (tier-a/b/c) или `regs` (коренът с индекса); файлът се заменя на място; новата редакция на индекса – първо съдържанието в текущия `_INDEX_…` файл, после `new_name` с новото име |
 | промяна в списъка на служителите | `staff_update` | `name` + `set` само с променените полета; нов човек – `row` |
 | ключ за колега | `keys` с `action: "add"`, `user` | връща готовия адрес на конектора – покажи го веднъж, точно както е върнат; `list`, `revoke` |
 
