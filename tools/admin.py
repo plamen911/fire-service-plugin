@@ -20,7 +20,14 @@ Fire Service: инструментите `keys`, `staff_update` и `samples_save
     python3 tools/admin.py staff add zveno="РСПБЗН – Кнежа" zaemana_dlazhnost="ПОЖАРНИКАР" \
         zvanie="Младши инспектор" ime="Иван Георгиев Петров" ime_kratko="Иван Петров"
 
-Файлове (Google Drive през n8n): видове spravka, eptz, raioni, admin
+Нормативната база (Google Drive през n8n) – файлът се заменя на място, със същото име и номер
+    python3 tools/admin.py regs put Weber_Equipment_X_2026.md --tier c   # нов или заменен файл в tier-a|b|c
+    python3 tools/admin.py regs index _INDEX_pozharna_bezopasnost_2026-10-08v.md   # новата редакция на индекса:
+                                                 # съдържанието отива в текущия _INDEX_ файл и той се преименува
+    python3 tools/admin.py regs list --tier c
+
+Файлове (Google Drive през n8n): видове spravka, eptz, raioni, admin, regs, regs-a, regs-b, regs-c
+    python3 tools/admin.py files rename regs СТАРО_ИМЕ.md НОВО_ИМЕ.md
     python3 tools/admin.py files list raioni
     python3 tools/admin.py files get raioni naseleni_mesta.csv -o .
     python3 tools/admin.py files put raioni naseleni_mesta.csv      # нова таблица на районите на действие
@@ -56,6 +63,14 @@ def show(obj):
     print(json.dumps(obj, ensure_ascii=False, indent=1))
 
 
+def put(kind, path, name=None):
+    """Create the file, or replace its content when a file with this name is already there."""
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    return call("samples_url", {"action": "put", "kind": kind, "name": name or os.path.basename(path), "text": text,
+                                "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()})
+
+
 def pairs(items):
     out = {}
     for item in items:
@@ -86,6 +101,13 @@ def main():
     p = files.add_parser("list"); p.add_argument("kind")
     p = files.add_parser("get"); p.add_argument("kind"); p.add_argument("name"); p.add_argument("-o", "--out", default=".")
     p = files.add_parser("put"); p.add_argument("kind"); p.add_argument("file"); p.add_argument("--name")
+    p = files.add_parser("rename"); p.add_argument("kind"); p.add_argument("name"); p.add_argument("new_name")
+
+    regs = sub.add_parser("regs").add_subparsers(dest="cmd", required=True)
+    p = regs.add_parser("put"); p.add_argument("file"); p.add_argument("--tier", choices=["a", "b", "c"], required=True)
+    p.add_argument("--name")
+    p = regs.add_parser("index"); p.add_argument("file")
+    p = regs.add_parser("list"); p.add_argument("--tier", choices=["a", "b", "c"])
     a = ap.parse_args()
 
     if a.area == "key":
@@ -113,9 +135,28 @@ def main():
             show(call("staff_url", {"action": "update", "name": a.name, "set": pairs(a.fields)}))
         else:
             show(call("staff_url", {"action": "add", "row": pairs(a.fields)}))
+    elif a.area == "regs":
+        if a.cmd == "list":
+            show(call("samples_url", {"action": "list", "kind": "regs-" + a.tier if a.tier else "regs"}))
+        elif a.cmd == "put":
+            show(put("regs-" + a.tier, a.file, a.name))
+        else:
+            new = os.path.basename(a.file)
+            if not new.startswith("_INDEX_") or not new.endswith(".md"):
+                sys.exit("BAD_INPUT: индексът е файл с име _INDEX_….md")
+            now = [f["name"] for f in call("samples_url", {"action": "list", "kind": "regs"})["files"] if f["name"].startswith("_INDEX_")]
+            if len(now) > 1:
+                sys.exit("BAD_STATE: в корена на базата има повече от един индекс: " + ", ".join(now) + " – остави един")
+            res = put("regs", a.file, now[0] if now else new)   # same file, same Drive id – only the content changes
+            if now and now[0] != new:
+                res = call("samples_url", {"action": "rename", "kind": "regs", "name": now[0], "new_name": new})
+                res["renamed_from"] = now[0]
+            show(res)
     else:
         if a.cmd == "list":
             show(call("samples_url", {"action": "list", "kind": a.kind}))
+        elif a.cmd == "rename":
+            show(call("samples_url", {"action": "rename", "kind": a.kind, "name": a.name, "new_name": a.new_name}))
         elif a.cmd == "get":
             res = call("samples_url", {"action": "get", "kind": a.kind, "name": a.name})
             path = os.path.join(a.out, a.name)
@@ -124,10 +165,7 @@ def main():
                 f.write(res["text"])
             show({"file": path, "link": res.get("link")})
         else:
-            with open(a.file, encoding="utf-8") as f:
-                text = f.read()
-            show(call("samples_url", {"action": "put", "kind": a.kind, "name": a.name or os.path.basename(a.file),
-                                      "text": text, "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()}))
+            show(put(a.kind, a.file, a.name))
 
 
 if __name__ == "__main__":
