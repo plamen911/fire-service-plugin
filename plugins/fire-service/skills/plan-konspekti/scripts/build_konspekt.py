@@ -33,6 +33,7 @@ data.json (всичко извън "kind", "tema", "tsel" и "izlozhenie" има
   "zvena": ["РСПБЗН – Червен бряг", "РСПБЗН – Кнежа"],              // "oc": от тях се образуват място и участващи
   "myasto": "…", "uchastvashti": "…",                               // ако трябва друг текст
   "materialno": ["Наредба № 8121з-1006 от 24.08.2015 г. за …", "…"],
+  "zaglavie_izlozhenie": "ИЗЛОЖЕНИЕ НА УЧЕБНИЯ МАТЕРИАЛ",          // заглавието пред изложението (по подразбиране това)
   "izlozhenie": [
     "## 1. Причини за възникване",                                   // подзаглавие (на отделен ред, без получер)
     "Обикновен абзац със свои думи. *Курсив* (име на възел, термин) се огражда със звездички.",
@@ -93,6 +94,8 @@ UCHASTVASHTI = ("държавни служители, заемащи младш�
                 "„Пожарогасителна и спасителна дейност“ в {zvena}")
 OC_SIGN = ["ИНСПЕКТОР В", "ГРУПА „ОПЕРАТИВЕН ЦЕНТЪР“"]
 MAX_FIG_WIDTH_CM = 16.0
+EXPOSITION_TITLE = "ИЗЛОЖЕНИЕ НА УЧЕБНИЯ МАТЕРИАЛ"     # the heading that opens the lecture itself
+ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"]
 
 
 def bad(msg):
@@ -308,6 +311,7 @@ def build(d, out, base):
     if not materialno:
         warnings.append("празно „Материално осигуряване“")
     items = d.get("izlozhenie") or []
+    heading = str(d.get("zaglavie_izlozhenie") or EXPOSITION_TITLE).strip().rstrip(":")
     if not items:
         warnings.append("няма изложение – план-конспектът трябва да носи текста на занятието")
 
@@ -333,6 +337,8 @@ def build(d, out, base):
         field(doc, "УЧАСТВАЩИ", people.rstrip(";") + ";")
         field_list(doc, "МАТЕРИАЛНО ОСИГУРЯВАНЕ", materialno)
         B.blank(doc)
+        if items:
+            B.para(doc, heading.upper() + ":", keep=True)
         chars, figs = exposition(doc, items, base, warnings)
         B.blank(doc)
 
@@ -377,6 +383,8 @@ def build(d, out, base):
             roman = "VII"
         field_list(doc, "Материално осигуряване", materialno, roman)
         B.blank(doc)
+        if items:
+            B.para(doc, f"{ROMAN[ROMAN.index(roman) + 1]}. {heading[0].upper() + heading[1:].lower()}:", keep=True)
         chars, figs = exposition(doc, items, base, warnings)
 
     B.blank(doc)

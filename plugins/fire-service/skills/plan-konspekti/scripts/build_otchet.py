@@ -30,6 +30,11 @@ data.json:
                         упражнението служителите постигнаха N точки.“; повече от най-многото по
                         картата на упражнението се отказва
 
+Отчетът се изготвя заедно с план-конспекта. Преди занятието присъствалите и резултатът още не са
+известни: звено без "prisastvali" или без резултат излиза с точки за попълване на ръка
+(„ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: ……… служители …“, „… е ……… сек., което е за ……… точки.“), а в
+"preduprezhdeniya" се казва кое е оставено празно. Числата никога не се измислят.
+
 Скриптът отпечатва JSON {"output", "zvena", "preduprezhdeniya"}.
 
 Грешки (на stderr, код ≠ 0):
@@ -65,11 +70,26 @@ def num(v):
     return str(int(f)) if f == int(f) else str(f).replace(".", ",")
 
 
-def result_sentence(z, ex, number):
+DOTS = "………"
+
+
+def blank_result(ex):
+    """The result line left for filling in by hand – the lesson has not been held yet."""
+    if (ex or {}).get("normativ"):
+        return f"Резултатът при проиграване на поставеното упражнение е {DOTS} сек., което е за {DOTS} точки."
+    if (ex or {}).get("max_tochki"):
+        return f"При изпълнение на упражнението служителите постигнаха {DOTS} точки."
+    return "…" * 60
+
+
+def result_sentence(z, ex, number, warnings=None):
     norm = (ex or {}).get("normativ")
     if str(z.get("rezultat") or "").strip():
         return str(z["rezultat"]).strip()
     sec, pts = z.get("sekundi"), z.get("tochki")
+    if sec is None and pts is None and warnings is not None:
+        warnings.append(f"за {z.get('zveno')} няма резултат – оставен е за попълване на ръка")
+        return blank_result(ex)
     if sec is not None and pts is None:
         if not norm:
             sys.exit(f"NO_NORM: за упражнение {number or '(свой текст)'} няма норматив в данните за упражненията – "
@@ -122,14 +142,15 @@ def build(d, out):
             bad("звено без име")
         present = u.get("prisastvali")
         if present is None:
-            bad(f"за {u['zveno']} липсва \"prisastvali\"")
+            warnings.append(f"за {u['zveno']} няма брой присъствали – оставен е за попълване на ръка")
         B.blank(doc)
         B.para(doc, f"{i}. В {u['zveno']}")
         B.para(doc, f"ТЕМА 1 (лекция): „{tema1}.“")
         B.para(doc, f"ТЕМА 2 (практика): {text2}")
-        word = "служител" if int(present) == 1 else "служители"
-        B.para(doc, f"ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: {int(present)} {word} от състава на дежурната смяна.")
-        B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, ex, number)}")
+        word = "служител" if present is not None and int(present) == 1 else "служители"
+        count = DOTS if present is None else int(present)
+        B.para(doc, f"ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: {count} {word} от състава на дежурната смяна.")
+        B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, ex, number, warnings)}")
     B.blank(doc, 3)
     position = sign.get("position") or ""
     name = sign.get("name") or B.PLACEHOLDER_NAME
