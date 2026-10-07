@@ -27,7 +27,8 @@ voda.py — водоизточниците за пожарогасене в ра
 Сверка с карта в Google My Maps (точките в нея са снети на място; името на точката е населеното място):
     python3 _shared/scripts/voda.py karta --link "https://www.google.com/maps/d/viewer?mid=…"   # само показва разликите
     python3 _shared/scripts/voda.py karta --kml karta.kml --proveril "Име Фамилия" --zapishi     # записва новите
-Картата се сваля направо само ако е споделена „всеки с връзката“; иначе – от свален от нея .kml/.kmz файл.
+Картата се сваля направо само ако е споделена „всеки с връзката“; иначе – от свален от нея .kml/.kmz файл
+или от списък с точки, прочетен от картата през браузъра (--tochki ФАЙЛ, ред: място|описание|ширина|дължина).
 
 Администраторът, когато излезе нова заповед за районите на действие:
     python3 _shared/scripts/voda.py mesta -o vodoiztochnitsi_mesta.csv   # населените места за сървъра
@@ -592,13 +593,13 @@ def map_text(a):
         except urllib.error.HTTPError as e:
             if e.code in (401, 403, 404):
                 raise Problem("MAP_PRIVATE: картата не се отваря без вход – не е споделена „всеки с връзката може да "
-                              "преглежда“. Или собственикът ѝ да я сподели така, или я свали като KML "
-                              "(меню ⋮ → „Експортиране в KML/KMZ“) и дай файла с --kml")
+                              "преглежда“. Свали я през браузъра, в който потребителят е влязъл (KML файл → --kml, "
+                              "или списък с точките → --tochki)")
             raise Problem(f"MAP_UNAVAILABLE: HTTP {e.code}")
         except OSError as e:
             raise Problem(f"MAP_UNAVAILABLE: {type(e).__name__}: {e}"[:300])
     else:
-        raise Problem("BAD_INPUT: дай --link (линк към картата) или --kml (свален от нея файл)")
+        raise Problem("BAD_INPUT: дай --link (линк към картата), --kml (свален от нея файл) или --tochki (списък с точки)")
     if raw[:2] == b"PK":  # .kmz
         try:
             with zipfile.ZipFile(io.BytesIO(raw)) as z:
@@ -646,9 +647,29 @@ def map_points(raw):
     return out
 
 
+def list_points(path):
+    """Points read off the map in the browser: one `място|описание|ширина|дължина` per line."""
+    out = []
+    try:
+        with open(path, encoding="utf-8-sig") as f:
+            lines = [x.strip() for x in f if x.strip() and not x.startswith("#")]
+    except OSError as e:
+        raise Problem(f"NO_DATA: {e}")
+    for n, line in enumerate(lines, 1):
+        parts = [x.strip() for x in line.split("|")]
+        try:
+            name, desc, lat, lon = parts[0], "|".join(parts[1:-2]), float(parts[-2]), float(parts[-1])
+        except (ValueError, IndexError):
+            raise Problem(f"BAD_INPUT: ред {n} не е „място|описание|ширина|дължина“: {line[:80]}")
+        out.append((name, desc, lat, lon))
+    kml = "".join(f"<Placemark><name>{html.escape(n)}</name><description>{html.escape(d)}</description><Point><coordinates>"
+                  f"{lo},{la},0</coordinates></Point></Placemark>" for n, d, la, lo in out)
+    return map_points(f"<kml><Document>{kml}</Document></kml>".encode())
+
+
 def cmd_karta(a, store):
     """Compare a map of on-site checked points with the table; with --zapishi add the new ones."""
-    pts = map_points(map_text(a))
+    pts = list_points(a.tochki) if a.tochki else map_points(map_text(a))
     if not pts:
         raise Problem("NO_DATA: в картата няма точки")
     rows = store.rows(fresh=True)
@@ -763,6 +784,7 @@ def main():
     p = sub.add_parser("mesta", parents=[common]); p.add_argument("-o", "--out", required=True)
     p = sub.add_parser("karta", parents=[common, write]); p.add_argument("--link", help="линк към картата в Google My Maps")
     p.add_argument("--kml", metavar="ФАЙЛ", help="свален от картата .kml или .kmz файл"); p.add_argument("--obshtina")
+    p.add_argument("--tochki", metavar="ФАЙЛ", help="списък с точки: място|описание|ширина|дължина на ред")
     p.add_argument("--zapishi", action="store_true", help="записва новите точки (без него само показва разликите)")
     a = ap.parse_args()
     if a.csv:

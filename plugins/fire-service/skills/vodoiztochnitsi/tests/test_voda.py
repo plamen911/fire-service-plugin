@@ -156,6 +156,17 @@ def main():
     r = run("karta")
     ok(r.returncode != 0 and "BAD_INPUT" in r.stderr, r.stderr)
     fresh()
+    spisak = os.path.join(TMP, "tochki.txt")
+    with open(spisak, "w", encoding="utf-8") as f:
+        f.write("".join(f"{n}|{'[снимка]' if '<img' in d else d}|{la}|{lo}\n" for n, d, la, lo in marks))
+    d2 = out("karta", "--tochki", spisak)
+    ok((d2["tochki_v_kartata"], d2["veche_v_tablitsata"], len(d2["novi"]), len(d2["nepoznati"])) == (5, 1, 3, 1), d2)
+    ok([m["tip"] for m in d2["novi"]] == ["подземен", "", "надземен"] and d2["novi"][0]["belezhka"] == "заринат", d2["novi"])
+    with open(spisak, "w", encoding="utf-8") as f:
+        f.write("Крушовене|без координати\n")
+    r = run("karta", "--tochki", spisak)
+    ok(r.returncode != 0 and "BAD_INPUT" in r.stderr, r.stderr)
+    fresh()
     # без ключ и без файл скриптът го казва и не измисля
     r = run("masto", "Крушовене", env=dict(BASE, FIRE_SERVICE_NO_KEY="1", FIRE_SERVICE_RAIONI_CSV=ENV["FIRE_SERVICE_RAIONI_CSV"]))
     ok(r.returncode != 0 and "NO_KEY" in r.stderr, r.stderr)
