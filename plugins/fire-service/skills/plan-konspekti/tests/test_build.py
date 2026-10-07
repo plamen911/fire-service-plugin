@@ -73,6 +73,8 @@ def test_oc():
     info = json.loads(r.stdout)
     text, d = doc_text(out)
     check("П Л А Н – К О Н С П Е К Т" in text, "spaced title")
+    check(text.index("МАТЕРИАЛНО ОСИГУРЯВАНЕ") < text.index("ИЗЛОЖЕНИЕ НА УЧЕБНИЯ МАТЕРИАЛ:") < text.index("1. Увод"),
+          "the heading that opens the exposition")
     check("РЕГИОНАЛНА ДИРЕКЦИЯ „ПОЖАРНА БЕЗОПАСНОСТ И ЗАЩИТА НА НАСЕЛЕНИЕТО” – ПЛЕВЕН" in text
           and "„ПБЗН" not in text.split("УТВЪРЖДАВАМ")[0], "letterhead: the directorate written in full")
     head = d.tables[0]._tbl
@@ -113,6 +115,7 @@ def test_seminar():
     text, _ = doc_text(out)
     check("I. Тема: Спасителни въжета." in text and "VI. Материално осигуряване: Правила" in text, "fields I–VI")
     check("Рег. №" in text and "ТЕМА 2" not in text, "registration lines, no second topic")
+    check("VII. Изложение на учебния материал:" in text, "the exposition is the next numbered point")
     check("1 учебен час на" in text, "time without a date keeps a blank")
     data["izlozhenie"] = []
     r, _ = run("build_konspekt.py", data, tmp)
@@ -169,6 +172,12 @@ def test_otchet():
     data["zvena"][0] = {"zveno": "РСПБЗН – Левски", "prisastvali": 3, "tochki": 7}
     r, _ = run("build_otchet.py", data, tmp)
     check(r.returncode != 0 and "BAD_INPUT" in r.stderr, "more points than the card allows are refused")
+    data["tema2"] = {"uprazhnenie": "1.1"}
+    data["zvena"] = [{"zveno": "РСПБЗН – Плевен"}]
+    r, out = run("build_otchet.py", data, tmp)
+    check(r.returncode == 0 and "ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: ……… служители" in doc_text(out)[0]
+          and "е ……… сек., което е за ……… точки." in doc_text(out)[0] and "за попълване на ръка" in r.stdout,
+          "before the lesson: attendance and result are left to fill in by hand")
     from build_otchet import points
     norm = [{"do_sek": 60, "tochki": 6}, {"do_sek": 75, "tochki": 4}]
     check(points(norm, 60) == 6 and points(norm, 72) == 4 and points(norm, 90) == 0, "points by a norm table")
