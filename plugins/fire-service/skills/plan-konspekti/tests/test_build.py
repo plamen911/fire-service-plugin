@@ -73,6 +73,12 @@ def test_oc():
     info = json.loads(r.stdout)
     text, d = doc_text(out)
     check("П Л А Н – К О Н С П Е К Т" in text, "spaced title")
+    check("РЕГИОНАЛНА ДИРЕКЦИЯ „ПОЖАРНА БЕЗОПАСНОСТ И ЗАЩИТА НА НАСЕЛЕНИЕТО” – ПЛЕВЕН" in text
+          and "„ПБЗН" not in text.split("УТВЪРЖДАВАМ")[0], "letterhead: the directorate written in full")
+    head = d.tables[0]._tbl
+    sizes = [r.font.size.pt for p in d.tables[0].cell(0, 0).paragraphs for r in p.runs]
+    check(sizes == [14, 14, 12] and head.xpath("./w:tblPr/w:tblBorders/w:bottom[@w:val='single']")
+          and head.xpath("./w:tblPr/w:tblW/@w:w") == ["10188"], "letterhead: 14/14/12 pt over a rule, 10188 dxa wide")
     check("рег. № 947р-0000/15.12.2025 г." in text and "през 2026 г." in text, "plan-grafik and year in the subtitle")
     check("Сградите на РСПБЗН – Левски и РСПБЗН – Белене" in text, "place from the units")
     check("Вдигане в контролна тревога" in text and "№ 8121з-1702/09.12.2022 г." in text, "exercise 1.1 from the data file")

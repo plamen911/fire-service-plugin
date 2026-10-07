@@ -25,9 +25,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = "Times New Roman"
 LINE = Pt(16)            # exact line spacing of the body
 INDENT = Cm(1.5)         # first-line indent
-HEADER = [("МИНИСТЕРСТВО НА ВЪТРЕШНИТЕ РАБОТИ", 16),
-          ("ГЛАВНА ДИРЕКЦИЯ „ПОЖАРНА БЕЗОПАСНОСТ И ЗАЩИТА НА НАСЕЛЕНИЕТО“", 14),
-          ("РЕГИОНАЛНА ДИРЕКЦИЯ „ПБЗН“ – ПЛЕВЕН", 14)]
+# The letterhead – one look for every document of the plugin (_shared/conventions.md, „Шапка“):
+# (text, size in pt, character spacing in twentieths of a point, space before in pt).
+HEADER = [("МИНИСТЕРСТВО НА ВЪТРЕШНИТЕ РАБОТИ", 14, 32, 0),
+          ("ГЛАВНА ДИРЕКЦИЯ „ПОЖАРНА БЕЗОПАСНОСТ И ЗАЩИТА НА НАСЕЛЕНИЕТО”", 14, -16, 6),
+          ("РЕГИОНАЛНА ДИРЕКЦИЯ „ПОЖАРНА БЕЗОПАСНОСТ И ЗАЩИТА НА НАСЕЛЕНИЕТО” – ПЛЕВЕН", 12, -16, 6)]
+HEADER_WIDTH = 10188     # dxa – wider than the text block, centered on it, as on the directorate's blank
 PLACEHOLDER_NAME = "[Име Фамилия]"
 PLACEHOLDER_RANK = "[ЗВАНИЕ]"
 
@@ -123,12 +126,51 @@ def _cell(cell, lines, align=LEFT):
 
 
 def letterhead(doc, extra=None):
-    """The letterhead; extra = one more line under it (the unit, e.g. „РСПБЗН – Левски“)."""
+    """The letterhead: three centered lines over a thin rule, the same in every document of the
+    plugin; extra = one more line under them (the unit, e.g. „РСПБЗН – Левски“)."""
     t = doc.add_table(rows=1, cols=1)
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
-    _borderless(t)
-    lines = HEADER + ([(extra.upper(), 14)] if extra else [])
-    _cell(t.cell(0, 0), [(text, {"size": size}) for text, size in lines], align=CENTER)
+    t.autofit = False
+    tbl_pr = t._tbl.tblPr
+    width = tbl_pr.find(qn("w:tblW"))
+    if width is None:
+        width = OxmlElement("w:tblW")
+        tbl_pr.append(width)
+    width.set(qn("w:w"), str(HEADER_WIDTH))
+    width.set(qn("w:type"), "dxa")
+    borders = OxmlElement("w:tblBorders")
+    for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        el = OxmlElement(f"w:{edge}")
+        el.set(qn("w:val"), "single" if edge == "bottom" else "nil")
+        if edge == "bottom":
+            el.set(qn("w:sz"), "4")
+            el.set(qn("w:space"), "0")
+            el.set(qn("w:color"), "auto")
+        borders.append(el)
+    after = [tbl_pr.find(qn(f"w:{n}")) for n in ("shd", "tblLayout", "tblCellMar", "tblLook")]
+    after = [el for el in after if el is not None]
+    if after:
+        after[0].addprevious(borders)                             # schema order inside tblPr
+    else:
+        tbl_pr.append(borders)
+    for col in t._tbl.tblGrid.findall(qn("w:gridCol")):
+        col.set(qn("w:w"), str(HEADER_WIDTH))
+    cell = t.cell(0, 0)
+    cell.width = HEADER_WIDTH * 635
+    lines = HEADER + ([(extra.upper(), 12, -16, 6)] if extra else [])
+    for i, (text, size, spacing, before) in enumerate(lines):
+        p = fmt(cell.paragraphs[0] if i == 0 else cell.add_paragraph(), CENTER, line=LINE)
+        p.paragraph_format.space_before = Pt(before)
+        r = p.add_run(text if i < len(HEADER) else typo(text))    # the blank's own quotes stay as they are
+        r.font.name, r.font.size = FONT, Pt(size)
+        sp = OxmlElement("w:spacing")
+        sp.set(qn("w:val"), str(spacing))
+        rpr = r._r.get_or_add_rPr()
+        size_el = rpr.find(qn("w:sz"))
+        if size_el is not None:
+            size_el.addprevious(sp)                               # schema order: spacing before sz
+        else:
+            rpr.append(sp)
     blank(doc)
 
 
