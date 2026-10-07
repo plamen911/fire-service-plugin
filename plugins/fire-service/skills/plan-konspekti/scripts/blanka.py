@@ -237,9 +237,10 @@ def title(doc, text, subtitle_lines):
     blank(doc)
 
 
-def signature(doc, date, lines, name, width_cm=16.5, left_extra=None):
-    """„ИЗГОТВИЛ“ on the right; the date and „Отп. в 1 екз.“ on the left."""
-    left = ([date, "Отп. в 1 екз."] if date else [""]) + list(left_extra or [])
+def signature(doc, date, lines, name, width_cm=16.5, left_extra=None, left=None):
+    """„ИЗГОТВИЛ“ on the right; the date and „Отп. в 1 екз.“ on the left (left = these lines instead)."""
+    if left is None:
+        left = ([date, "Отп. в 1 екз."] if date else [""]) + list(left_extra or [])
     right = ["ИЗГОТВИЛ:"] + list(lines or []) + ["", (name or PLACEHOLDER_NAME, {"align": CENTER})]
     t = doc.add_table(rows=1, cols=2)
     _borderless(t)
