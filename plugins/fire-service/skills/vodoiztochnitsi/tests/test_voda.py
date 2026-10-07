@@ -125,6 +125,37 @@ def main():
     lines = open(TABLE, encoding="utf-8").read().splitlines()
     ok(lines[0].startswith("id,ekatte,naseleno_masto") and len(lines) == 8, len(lines))
     ok([x.split(",")[0] for x in lines[1:4]] == ["00004-001", "00004-002", "00004-003"], "подредба")
+    # сверка с карта (KML): познатите точки се прескачат, новите се показват и се записват само с --zapishi
+    fresh()
+    kml = os.path.join(TMP, "karta.kml")
+    marks = [("Крушовене", "Подземен хидрант", 43.6512300, 24.4084200),            # на ~4 m от 00001-001
+             ("Крушовене", "Подземен хидрант (заринат)", 43.6400000, 24.4000000),
+             ("Крушовене", '<img src="https://example.org/a.jpg" /><br>', 43.6410000, 24.4010000),
+             ("Гиген", "Червен надземен хидрант", 43.7010000, 24.4840000),
+             ("Несъществуващо", "Надземен хидрант", 43.6000000, 24.4000000)]
+    with open(kml, "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><Folder><name>слой</name>'
+                + "".join(f"<Placemark><name>{n}</name><description><![CDATA[{d}]]></description><Point><coordinates>{lo},{la},0"
+                          "</coordinates></Point></Placemark>" for n, d, la, lo in marks) + "</Folder></Document></kml>")
+    d = out("karta", "--kml", kml)
+    ok((d["tochki_v_kartata"], d["veche_v_tablitsata"], len(d["novi"]), len(d["nepoznati"])) == (5, 1, 3, 1), d)
+    ok([(m["tip"], m["belezhka"]) for m in d["novi"]] == [("подземен", "заринат"), ("", "типът не е посочен в картата (само снимка)"),
+                                                           ("надземен", "червен")], d["novi"])
+    ok(d["zapisani"] == [] and len(open(TABLE, encoding="utf-8").read().splitlines()) == 7, "без --zapishi не се записва")
+    ok("NOT_FOUND" in d["nepoznati"][0]["prichina"], d["nepoznati"])
+    d = out("karta", "--kml", kml, "--zapishi", "--proveril", "Иван Дъбов", "--dry-run")
+    ok(len(d["zapisani"]) == 3 and len(open(TABLE, encoding="utf-8").read().splitlines()) == 7, "проба")
+    d = out("karta", "--kml", kml, "--zapishi", "--proveril", "Иван Дъбов")
+    ok([v["id"] for v in d["zapisani"]] == ["00001-005", "00001-006", "00004-003"], d["zapisani"])
+    ok(all(v["proveril"] == "Иван Дъбов" and v["tochnost"] == "проверена" for v in d["zapisani"]), d["zapisani"])
+    d = out("karta", "--kml", kml, "--zapishi")
+    ok((d["veche_v_tablitsata"], d["novi"], d["zapisani"]) == (4, [], []), "повторната сверка не добавя нищо")
+    ok(d["nyama_gi_v_kartata"] == [], d["nyama_gi_v_kartata"])
+    r = run("karta", "--kml", os.path.join(FIX, "naseleni_mesta.csv"))
+    ok(r.returncode != 0 and "MAP_PRIVATE" in r.stderr, r.stderr)
+    r = run("karta")
+    ok(r.returncode != 0 and "BAD_INPUT" in r.stderr, r.stderr)
+    fresh()
     # без ключ и без файл скриптът го казва и не измисля
     r = run("masto", "Крушовене", env=dict(BASE, FIRE_SERVICE_NO_KEY="1", FIRE_SERVICE_RAIONI_CSV=ENV["FIRE_SERVICE_RAIONI_CSV"]))
     ok(r.returncode != 0 and "NO_KEY" in r.stderr, r.stderr)
