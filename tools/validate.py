@@ -16,6 +16,7 @@ validate.py — проверява репозиторито преди push (и 
   • всички .py се компилират; няма очевидни пароли/токени;
   • в хранилището няма лични данни и тайни (tools/check_public.py) – то е публично;
   • в шаблоните на документите няма получер шрифт;
+  • шапката в шаблоните е еднаква (shared/conventions.md, „Шапката“);
   • тестовете в skills/*/tests/ минават.
 """
 import argparse
@@ -138,6 +139,52 @@ def check_no_bold():
         print("✓ no bold in the templates")
 
 
+LETTERHEAD = [("МИНИСТЕРСТВО НА ВЪТРЕШНИТЕ РАБОТИ", "28", "32"),
+              ("ГЛАВНА ДИРЕКЦИЯ „ПОЖАРНА БЕЗОПАСНОСТ И ЗАЩИТА НА НАСЕЛЕНИЕТО”", "28", "-16"),
+              ("„ПОЖАРНА БЕЗОПАСНОСТ И ЗАЩИТА НА НАСЕЛЕНИЕТО” – ПЛЕВЕН", "24", "-16")]
+
+
+def check_letterhead():
+    """The letterhead is the same in every .docx template: three lines, their sizes and character
+    spacing, a 10188 dxa table with a bottom rule (shared/conventions.md)."""
+    import zipfile
+    w = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    from xml.etree import ElementTree as ET
+    bad = 0
+    for f in sorted(glob.glob(os.path.join(SKILLS, "*", "assets", "*.docx"))):
+        rel = os.path.relpath(f, ROOT)
+        with zipfile.ZipFile(f) as z:
+            body = ET.fromstring(z.read("word/document.xml")).find(w + "body")
+        first = body[0] if len(body) else None
+        if first is None or first.tag != w + "tbl":
+            continue                                      # a template without a letterhead
+        paras = [p for p in first.iter(w + "p") if "".join(p.itertext()).strip()]
+        if not paras or "".join(paras[0].itertext()).strip() != LETTERHEAD[0][0]:
+            continue
+        problems = []
+        if len(paras) != 3:
+            problems.append(f"{len(paras)} lines instead of 3")
+        for p, (text, size, spacing) in zip(paras, LETTERHEAD):
+            got = "".join(p.itertext()).strip()
+            if not got.endswith(text):
+                problems.append(f"line „{got}“")
+            sizes = {e.get(w + "val") for e in p.iter(w + "sz")}
+            spacings = {e.get(w + "val") for r in p.iter(w + "r") for e in r.iter(w + "spacing")}
+            if sizes != {size} or spacings != {spacing}:
+                problems.append(f"„{got[:24]}…“: sz {sorted(sizes)} spacing {sorted(spacings)}, expected {size}/{spacing}")
+        width = first.find(w + "tblPr/" + w + "tblW")
+        if width is None or width.get(w + "w") != "10188":
+            problems.append("table width is not 10188 dxa")
+        if first.find(w + "tblPr/" + w + "tblBorders/" + w + "bottom") is None:
+            problems.append("no rule under the letterhead")
+        for msg in problems:
+            bad += 1
+            err(f"letterhead in {rel}: {msg}")
+    if not bad:
+        print("✓ one letterhead in the templates")
+
+
+
 def run_tests():
     for t in sorted(glob.glob(os.path.join(SKILLS, "*", "tests", "test_*.py"))):
         r = subprocess.run([sys.executable, t], cwd=os.path.dirname(os.path.dirname(t)),
@@ -167,6 +214,7 @@ def main():
     check_python()
     check_secrets()
     check_no_bold()
+    check_letterhead()
     if not a.no_tests:
         run_tests()
     print()
