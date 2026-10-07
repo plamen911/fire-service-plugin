@@ -176,7 +176,7 @@ def build(d, out):
     B.letterhead(doc)
     B.para(doc, "Рег. № ............................, екз. № .......", align=B.LEFT, indent=False)
     B.para(doc, f"..........................{year} г.", align=B.LEFT, indent=False)
-    B.blank(doc, 2)
+    B.blank(doc, 2 if len(units) < 2 else 1)
     B.title(doc, "ОТЧЕТ", ["за", f"проведено занятие със служителите на {names},",
                            f"които са на смяна на {date}"])
     B.para(doc, f"На {date} се проведоха занятия, както следва:")
@@ -198,16 +198,19 @@ def build(d, out):
         B.para(doc, f"ПРИСЪСТВАЛИ СЛУЖИТЕЛИ: {count} {word} от състава на дежурната смяна.")
         key = f"{date}|{u['zveno']}|{number}" if fill else None
         B.para(doc, f"ПОСТИГНАТИ РЕЗУЛТАТИ: {result_sentence(u, ex, number, warnings, key)}")
-    B.blank(doc, 3)
+    B.blank(doc, 3 if len(units) < 2 else 1)       # two units and the signature still fit on one page
     position = sign.get("position") or ""
     name = sign.get("name") or B.PLACEHOLDER_NAME
-    B.signature(doc, "", sign.get("lines") or ["ИНСПЕКТОР В", "ГРУПА „ОПЕРАТИВЕН ЦЕНТЪР“"], name,
-                left_extra=[])
-    B.blank(doc, 2)
-    for line in ["Изготвил:", position, name.replace("инспектор ", "").replace("Инспектор ", ""),
-                 sign.get("date") or date, "Отп. в 1 екз.", "Екз. № 1 – деловодство"]:
-        if line:
+    footer = [line for line in ["Изготвил:", position, name.replace("инспектор ", "").replace("Инспектор ", ""),
+                                sign.get("date") or date, "Отп. в 1 екз.", "Екз. № 1 – деловодство"] if line]
+    lines = sign.get("lines") or ["ИНСПЕКТОР В", "ГРУПА „ОПЕРАТИВЕН ЦЕНТЪР“"]
+    if len(units) < 2:
+        B.signature(doc, "", lines, name, left_extra=[])
+        B.blank(doc, 2)
+        for line in footer:
             B.para(doc, line, align=B.LEFT, indent=False)
+    else:           # two units: the block goes beside the signature, so the report stays on one page
+        B.signature(doc, "", lines, name, left=footer)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     doc.save(out)
     return {"output": out, "zvena": len(units), "preduprezhdeniya": warnings}
