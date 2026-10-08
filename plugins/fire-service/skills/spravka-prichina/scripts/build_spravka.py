@@ -45,6 +45,9 @@ import sys
 from docx import Document
 from lxml import etree
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared", "scripts"))
+from docx_common import report, typo, typo_all  # noqa: E402  (the common typography rules and the final check)
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "..", "assets", "template.docx")
 MODEL = os.path.join(HERE, "..", "assets", "body_paragraph_model.xml")
@@ -69,31 +72,6 @@ HEADINGS = [
     "2. Обстановка по време на произшествието:",
     "3. Обстоятелства и факти, позволяващи да се установи вероятната причина за пожара:",
 ]
-
-
-NO_RE = re.compile(r"№\s*(?=\S)")   # „№4“ → „№ 4“ (_shared/conventions.md)
-
-
-DASH_RE = re.compile(r"(^|\s)-(?=\s)")   # самостоятелно „-“ между интервали → „–“
-
-def typo(text):
-    """Типографски правила от _shared/conventions.md: „№ 4“; тирето е „–“ (не „-“ и не „—“).
-    Дефисът в думи и номера („1234р-56789“, „Бала-баир“) не се пипа."""
-    text = NO_RE.sub("№ ", text).replace("—", "–")
-    return DASH_RE.sub(lambda m: m.group(1) + "–", text)
-
-
-def typo_all(doc, tag):
-    """Прилага typo() върху целия документ — тяло, текстови полета, колонтитули."""
-    parts = [doc.element.body]
-    for sec in doc.sections:
-        for hf in (sec.header, sec.first_page_header, sec.even_page_header,
-                   sec.footer, sec.first_page_footer, sec.even_page_footer):
-            parts.append(hf._element)
-    for part in parts:
-        for t in part.iter(tag):
-            if t.text:
-                t.text = typo(t.text)
 
 
 def set_paragraph_text(p, text):
@@ -266,6 +244,7 @@ def build(data, out_path):
 
     typo_all(doc, W + "t")
     doc.save(out_path)
+    report(out_path)
     return out_path
 
 

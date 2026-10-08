@@ -281,6 +281,7 @@ def build_psp(d, out):
     B.page_numbers(doc)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     doc.save(out)
+    B.report(out)
     chars = sum(len(x) for v in hod.values() for x in (v or []))
     return {"output": out, "kind": "psp", "znatsi_izlozhenie": chars, "figuri": 0, "preduprezhdeniya": warnings}
 
@@ -392,6 +393,7 @@ def build(d, out, base):
     B.page_numbers(doc)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     doc.save(out)
+    B.report(out)
     return {"output": out, "kind": kind, "znatsi_izlozhenie": chars, "figuri": figs, "preduprezhdeniya": warnings}
 
 

@@ -47,8 +47,10 @@ def build(data):
     tmp = tempfile.mkdtemp()
     dp, out = os.path.join(tmp, "d.json"), os.path.join(tmp, "s.docx")
     json.dump(data, open(dp, "w", encoding="utf-8"), ensure_ascii=False)
-    subprocess.run([sys.executable, os.path.join(SKILL, "scripts", "build_spravka.py"), dp, "-o", out],
-                   check=True, capture_output=True)
+    r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", "build_spravka.py"), dp, "-o", out],
+                       check=True, capture_output=True, text=True)
+    if "DOC_CHECK" in r.stderr:   # the finished справка must keep the common rules (no bold, letterhead, „–“, „№ “)
+        check(False, "DOC_CHECK: " + r.stderr.strip()[:200])
     return text(out)
 
 

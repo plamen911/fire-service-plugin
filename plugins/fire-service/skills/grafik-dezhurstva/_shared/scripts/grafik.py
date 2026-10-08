@@ -425,35 +425,45 @@ def cmd_import(a, store):
                       f"Нов вид се добавя там.")
     new_rows, notes = canonical_rows(reading, roster(), kind, last_day_of(month))
 
+    # Read – merge – write. Somebody else may save the same month in between (a colleague uploading the other
+    # half of the roster): just before writing the month is read again and, if it has changed, the merge is
+    # redone over the fresh copy, so the other person's rows are not lost.
     current = store.get(grafik, month)
-    old = json.loads(current) if current else None
-    old_rows = (old or {}).get("sluzhiteli", [])
-    incoming = {norm(r["ime"]): r for r in new_rows}
-    numbers = {r["nomer"] for r in new_rows}
-    kept, removed = [], []
-    for r in old_rows:
-        if norm(r["ime"]) in incoming:
-            continue
-        # same row number, another name = the earlier reading of that row was wrong
-        if a.replace or r["nomer"] in numbers:
-            removed.append(r["ime"])
-        else:
-            kept.append(r)
-    before = {norm(r["ime"]): r for r in old_rows}
-    added = [r["ime"] for r in new_rows if norm(r["ime"]) not in before]
-    updated = [r["ime"] for r in new_rows if norm(r["ime"]) in before and before[norm(r["ime"])] != r]
+    for attempt in range(3):
+        old = json.loads(current) if current else None
+        old_rows = (old or {}).get("sluzhiteli", [])
+        incoming = {norm(r["ime"]): r for r in new_rows}
+        numbers = {r["nomer"] for r in new_rows}
+        kept, removed = [], []
+        for r in old_rows:
+            if norm(r["ime"]) in incoming:
+                continue
+            # same row number, another name = the earlier reading of that row was wrong
+            if a.replace or r["nomer"] in numbers:
+                removed.append(r["ime"])
+            else:
+                kept.append(r)
+        before = {norm(r["ime"]): r for r in old_rows}
+        added = [r["ime"] for r in new_rows if norm(r["ime"]) not in before]
+        updated = [r["ime"] for r in new_rows if norm(r["ime"]) in before and before[norm(r["ime"])] != r]
 
-    doc = {"grafik": grafik, "mesec": month}
-    for field in ("zaglavie", "reg_nomer"):
-        value = str(reading.get(field) or (old or {}).get(field) or "").strip()
-        if value:
-            doc[field] = value
-    doc["sluzhiteli"] = order(kept + new_rows)
-    text = dump(doc)
-    changed = text != current
-    where = store.where(grafik, month)
-    if changed and not a.dry_run:
+        doc = {"grafik": grafik, "mesec": month}
+        for field in ("zaglavie", "reg_nomer"):
+            value = str(reading.get(field) or (old or {}).get(field) or "").strip()
+            if value:
+                doc[field] = value
+        doc["sluzhiteli"] = order(kept + new_rows)
+        text = dump(doc)
+        changed = text != current
+        where = store.where(grafik, month)
+        if not changed or a.dry_run:
+            break
+        latest = store.get(grafik, month)
+        if latest != current and attempt < 2:
+            current = latest          # the month was saved by someone else meanwhile – merge again
+            continue
         where = store.put(grafik, month, text)
+        break
     out({
         "ok": True, "grafik": grafik, "mesec": month, "store": store.name, "file": where,
         "changed": changed, "written": changed and not a.dry_run, "sha256": sha(text),

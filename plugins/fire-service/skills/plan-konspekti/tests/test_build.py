@@ -52,6 +52,8 @@ def run(script, data, tmp, *extra):
     r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", script), dp, "-o", out,
                         "--uprazhneniya", os.path.join(HERE, "fixtures", "uprazhneniya.json"), *extra],
                        capture_output=True, text=True)
+    if r.returncode == 0 and "DOC_CHECK" in r.stderr:   # the finished document must keep the common rules
+        check(False, "DOC_CHECK: " + r.stderr.strip()[:200])
     return r, out
 
 

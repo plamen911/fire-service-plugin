@@ -52,6 +52,9 @@ import tempfile
 import openpyxl
 from openpyxl.styles import PatternFill
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared", "scripts"))
+from docx_common import typo  # noqa: E402  (the common typography rules)
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "..", "assets", "smetka_template.xlsx")
 
@@ -226,8 +229,7 @@ def fill(d, xlsx_out):
     for row in ws.iter_rows():
         for c in row:
             if isinstance(c.value, str) and not c.value.startswith("="):
-                v = re.sub(r"№\s*(?=\S)", "№ ", c.value).replace("—", "–")
-                c.value = re.sub(r"(^|\s)-(?=\s)", lambda m: m.group(1) + "–", v)
+                c.value = typo(c.value)
     wb.save(xlsx_out)
     return total
 

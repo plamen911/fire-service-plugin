@@ -174,6 +174,10 @@ def test_docx():
             xml = z.read("word/document.xml").decode("utf-8")
             ok("1017" in xml and "ХЛОР" in xml and "600 m" in xml and "6,4 km" in xml)
             ok(sum(n.startswith("word/media/") for n in z.namelist()) == 3, "three hazard labels: 2.3 + 5.1 + 8")
+        sys.path.insert(0, os.path.join(SKILL, "_shared", "scripts"))
+        from docx_common import check_document
+        bad = check_document(f, letterhead=False)   # the card has no letterhead, but no bold and the common typography
+        ok(not bad, "the card keeps the common rules: " + "; ".join(bad)[:200])
         f2 = os.path.join(d, "s.docx")
         ok(run("--un", "3480", "-o", f2, script=DOCX).returncode == 0 and os.path.getsize(f2) > 8000)
         ok(run("--un", "9999", "-o", f2, script=DOCX).returncode == 2)

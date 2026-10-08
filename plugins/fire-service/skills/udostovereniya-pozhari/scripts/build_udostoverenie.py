@@ -47,6 +47,9 @@ import sys
 from docx import Document
 from docx.oxml.ns import qn
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared", "scripts"))
+from docx_common import report, typo, typo_all  # noqa: E402  (the common typography rules and the final check)
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES = {
     "udostoverenie": os.path.join(HERE, "..", "assets", "udostoverenie_template.docx"),
@@ -72,15 +75,7 @@ def staff_director():
     except Exception:
         return None
 
-NO_RE = re.compile(r"№\s*(?=\S)")
-DASH_RE = re.compile(r"(^|\s)-(?=\s)")
 PH_RE = re.compile(r"\{\{\w+\}\}")
-
-
-def typo(text):
-    """„№ 4“; тирето е „–“ (не „-“ между интервали и не „—“)."""
-    text = NO_RE.sub("№ ", text).replace("—", "–")
-    return DASH_RE.sub(lambda m: m.group(1) + "–", text)
 
 
 def ptext(p):
@@ -170,18 +165,6 @@ def drop_row_if_empty(root, marker, value):
         tr.getparent().remove(tr)
 
 
-def typo_all(doc):
-    parts = [doc.element.body]
-    for sec in doc.sections:
-        for hf in (sec.header, sec.first_page_header, sec.even_page_header,
-                   sec.footer, sec.first_page_footer, sec.even_page_footer):
-            parts.append(hf._element)
-    for part in parts:
-        for t in part.iter(qn("w:t")):
-            if t.text:
-                t.text = typo(t.text)
-
-
 def build(data, out):
     kind = data.get("kind", "udostoverenie")
     if kind not in TEMPLATES:
@@ -224,6 +207,7 @@ def build(data, out):
         raise SystemExit(f"Непопълнени полета: {left}")
     typo_all(doc)
     doc.save(out)
+    report(out)
     print(f"✅ {out}")
 
 

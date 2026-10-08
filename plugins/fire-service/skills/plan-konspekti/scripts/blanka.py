@@ -21,6 +21,11 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 
+import sys  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared", "scripts"))
+from docx_common import report  # noqa: E402,F401  (the builders call it after saving)
+from docx_common import typo as _typo  # noqa: E402
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = "Times New Roman"
 LINE = Pt(16)            # exact line spacing of the body
@@ -34,15 +39,13 @@ HEADER_WIDTH = 10188     # dxa – wider than the text block, centered on it, as
 PLACEHOLDER_NAME = "[Име Фамилия]"
 PLACEHOLDER_RANK = "[ЗВАНИЕ]"
 
-NO_RE = re.compile(r"№\s*(?=\S)")
-DASH_RE = re.compile(r"(^|\s)-(?=\s)")
 JUSTIFY, CENTER, LEFT = WD_ALIGN_PARAGRAPH.JUSTIFY, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.LEFT
 
 
 def typo(text):
-    """„№ 4“; the dash is „–“ (never „-“ between spaces, never „—“); closing quote is „“."""
-    text = NO_RE.sub("№ ", str(text)).replace("—", "–").replace("”", "“")
-    return DASH_RE.sub(lambda m: m.group(1) + "–", text)
+    """„№ 4“; the dash is „–“ (never „-“ between spaces, never „—“); closing quote is „“ – the common rules
+    (_shared/scripts/docx_common.py) plus the quote."""
+    return _typo(text, quotes=True)
 
 
 def new_document(right_cm=2.0):

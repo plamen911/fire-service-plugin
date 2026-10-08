@@ -45,6 +45,8 @@ def build(data):
     json.dump(data, open(dp, "w", encoding="utf-8"), ensure_ascii=False)
     r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", "build_udostoverenie.py"),
                         dp, "-o", out], capture_output=True, text=True)
+    if r.returncode == 0 and "DOC_CHECK" in r.stderr:   # the finished document must keep the common rules
+        check(False, "DOC_CHECK: " + r.stderr.strip()[:200])
     return (doc_text(out) if r.returncode == 0 else None), r
 
 

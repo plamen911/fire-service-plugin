@@ -213,6 +213,7 @@ def build(d, out):
         B.signature(doc, "", lines, name, left=footer)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     doc.save(out)
+    B.report(out)
     return {"output": out, "zvena": len(units), "preduprezhdeniya": warnings}
 
 

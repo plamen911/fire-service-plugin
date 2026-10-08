@@ -47,7 +47,9 @@ def build(content, meta, out, final=False):
            "--content", content, "--meta", meta, "--out", out]
     if final:
         cmd.append("--final")
-    subprocess.run(cmd, check=True, capture_output=True)
+    r = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    check("DOC_CHECK" not in r.stderr, "the finished ЕПТЗ keeps the common rules (no bold, letterhead, „–“, „№ “)"
+          + (": " + r.stderr.strip()[:200] if "DOC_CHECK" in r.stderr else ""))
 
 
 def test_eptz():

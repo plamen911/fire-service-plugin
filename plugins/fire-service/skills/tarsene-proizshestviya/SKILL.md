@@ -37,7 +37,10 @@ description: >-
 1. Прочети `_shared/conventions.md` и `_shared/terminology.md`.
    **Ако в разговора има инструмент `incidents` (конектор Fire Service)** – взимай данните
    и числата от него, а не със скриптовете: виж `_shared/connector.md` (там е и какво не
-   работи в този режим – графика, карта, `.xlsx`).
+   работи в този режим – карта, `.xlsx`). **Сравнение на периоди и разбивка по месеци** в този
+   режим: по едно извикване на `incidents` за всеки период, числата във файл и
+   `python3 scripts/compare_counts.py counts.json -o stats.json` – разликите ги смята скриптът, не ти;
+   от същия `stats.json` `incident_chart.py` прави графиката.
 2. Прочети `references/fields.md` – полетата, стойностите им и кой филтър за какво.
 3. При съмнение как да преведеш въпроса – `references/examples.md`; как да напишеш
    отговора – `references/answers.md`.
