@@ -55,7 +55,8 @@ from openpyxl.styles import PatternFill
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "..", "assets", "smetka_template.xlsx")
 
-RATE = 0.035 * 620.2          # E11
+RATE = 0.035 * 620.2          # E11 – the same formula stands in the template; the test compares the two
+NUMBERS = ("pages", "copies", "hours", "a4_bw", "a4_color", "a3_bw", "hours_weekend", "hours_holiday", "complex_addon")
 
 # Данните на експерта по подразбиране (_shared/profile.md); другият експерт подава своите.
 DEFAULT_TITLE = "инспектор"
@@ -134,11 +135,26 @@ def apply_defaults(d):
     """Правило на експерта: часове труд = страниците на ЕПТЗ - 2 (напр. 6 стр. → 4 ч.);
     листа А4 = страници × екземпляри. Изрично подадени "hours"/"a4_bw" имат предимство."""
     d = dict(d)
+    for k in NUMBERS:                      # numbers may come as text ("4", "4,5") or as null
+        v = d.get(k)
+        if v is None or v == "":
+            d.pop(k, None)
+            continue
+        try:
+            d[k] = float(str(v).replace(",", ".")) if not isinstance(v, (int, float)) else v
+        except ValueError:
+            sys.exit(f"BAD_INPUT: „{k}“ трябва да е число, а е „{v}“")
+        if d[k] < 0:
+            sys.exit(f"BAD_INPUT: „{k}“ не може да е отрицателно ({v})")
+        if d[k] == int(d[k]):
+            d[k] = int(d[k])
     pages = int(d.get("pages") or 0)
     if pages and "hours" not in d:
         d["hours"] = max(pages - 2, 1)
     if pages and "a4_bw" not in d:
         d["a4_bw"] = pages * int(d.get("copies") or 2)
+    if not d.get("hours"):
+        sys.exit('BAD_INPUT: няма часове труд – подай "pages" (страниците на заключението) или "hours"')
     return d
 
 
@@ -171,7 +187,7 @@ def fill(d, xlsx_out):
     dots = lambda v, fallback: v if v else fallback
     title = (d.get("expert_title") or DEFAULT_TITLE).strip()
     ws["A7"] = (
-        "по чл.23, ал.3 от Наредба № H-1/14.02.2023г. за вписването, квалификацията и "
+        "по чл.23, ал.3 от Наредба № Н-1/14.02.2023г. за вписването, квалификацията и "
         "възнагражденията на вещите лица за направените разходи за труд, консумативи и режийни "
         f"разноски по експертиза № {dots(d.get('ekspertiza_no'), '………….......................')}"
         f"/{dots(d.get('ekspertiza_year'), '…….…….')} г., назначена от {d.get('naznachil', '……………')} "

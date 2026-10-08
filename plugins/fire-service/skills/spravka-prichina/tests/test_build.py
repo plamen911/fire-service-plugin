@@ -101,9 +101,13 @@ if __name__ == "__main__":
           "upper-case title is lowered, Roman numeral kept")
     check("(мл. експерт Георги Малинов)" in build(dict(base, signer_title="мл. експерт", signer_name="Георги Малинов")),
           "mixed-case signer title is kept as given")
-    check("(ВПД началник на РСПБЗН – Червен Бряг Иван Дъбов)" in
-          build(dict(base, signer_title="ВПД НАЧАЛНИК НА РСПБЗН – ЧЕРВЕН БРЯГ", signer_name="Иван Дъбов")),
-          "abbreviations and place name keep their capitals")
+    t_cb = build(dict(base, unit="ЧЕРВЕН БРЯГ", signer_title="ВПД НАЧАЛНИК НА РСПБЗН – ЧЕРВЕН БРЯГ", signer_name="Иван Дъбов"))
+    check("(ВПД началник на РСПБЗН – Червен бряг Иван Дъбов)" in t_cb,
+          "abbreviations keep their capitals; the place is spelled officially – „Червен бряг“")
+    check("гр. Червен бряг" in t_cb and "Червен Бряг" not in t_cb, "„гр. Червен бряг“, never „Червен Бряг“")
+    check("(началник на РСПБЗН – Долна Митрополия Иван Дъбов)" in
+          build(dict(base, signer_title="НАЧАЛНИК НА РСПБЗН – ДОЛНА МИТРОПОЛИЯ", signer_name="Иван Дъбов")),
+          "a two-word place with both words capitalised stays so")
     check(body_alignments(base) == {"JUSTIFY (3)"}, "body text is justified")
     t_nc = build(dict(base, addressee_chief=False))
     check("ВАСИЛ СМЪРЧЕВ" not in t_nc and "РСПБЗН – ПЛЕВЕН" in t_nc, "addressee_chief false")

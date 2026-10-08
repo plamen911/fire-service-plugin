@@ -144,8 +144,7 @@ class Store:
 
     def _keep(self, text):
         try:
-            with open(self.cache, "w", encoding="utf-8") as f:
-                f.write(text)
+            api_config.write_private(self.cache, text)
         except OSError:
             pass
 

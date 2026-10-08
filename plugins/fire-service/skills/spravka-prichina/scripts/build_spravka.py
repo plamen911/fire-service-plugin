@@ -138,6 +138,17 @@ ABBR = {"РСПБЗН", "РДПБЗН", "УПБЗН", "ГДПБЗН", "МВР", 
 ROMAN_RE = re.compile(r"^[IVXІ]+$")
 
 
+# Places whose official spelling is not "every word capitalised" (the second word is a common noun).
+PLACE_NAMES = {"червен бряг": "Червен бряг"}
+
+
+def place_case(name):
+    """Upper-case place name → its official spelling: „ЛЕВСКИ“ → „Левски“, „ДОЛНА МИТРОПОЛИЯ“ →
+    „Долна Митрополия“, but „ЧЕРВЕН БРЯГ“ → „Червен бряг“."""
+    name = " ".join(name.split())
+    return PLACE_NAMES.get(name.lower(), name.title())
+
+
 def title_lower(title):
     """Upper-case title → lower case for the line under „ИЗГОТВИЛ:“
     („ИНСПЕКТОР IV СТ.“ → „инспектор IV ст.“).
@@ -153,7 +164,7 @@ def title_lower(title):
     for i in range(0, len(parts), 2):
         parts[i] = " ".join(w if w in ABBR or ROMAN_RE.match(w) else w.lower()
                             for w in parts[i].split(" "))
-    return "".join(parts) + (dash + place.title() if dash else "")
+    return "".join(parts) + (dash + place_case(place) if dash else "")
 
 
 def chief_lines(unit):
@@ -226,7 +237,7 @@ def build(data, out_path):
                                   f".............{year} г."])
 
     # --- „гр. …“ и „ИЗГОТВИЛ:“ ---
-    city = (data.get("city") or unit.title()).strip()
+    city = (data.get("city") or place_case(unit)).strip()
     fill_column(doc.tables[2], 0, [f"гр. {city}"])
     # „ИЗГОТВИЛ:“ (with the tabs that leave room for the signature) is fixed text in the
     # template, on the same line as the place; only the line under it is filled in

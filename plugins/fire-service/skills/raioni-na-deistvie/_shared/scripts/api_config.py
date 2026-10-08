@@ -106,6 +106,14 @@ def profile():
     return dict(_key_skill().get("profile") or {})
 
 
+def write_private(path, text):
+    """Write a cached copy of server data so that only its owner can read it (0600), never group or others."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(text)
+    os.chmod(path, 0o600)   # a file left by an older version keeps its old mode otherwise
+
+
 def request(url_field, body, timeout=60):
     """A urllib Request for one of the endpoints; exits with NO_KEY when there is no key."""
     cfg = load()

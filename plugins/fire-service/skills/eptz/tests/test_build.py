@@ -111,6 +111,20 @@ def test_smetka():
     dd = apply_defaults({"pages": 6, "copies": 2})
     check(dd["hours"] == 4 and dd["a4_bw"] == 12, "pages 6, copies 2 → 4 h, 12 sheets")
     check(apply_defaults({"pages": 6, "hours": 5})["hours"] == 5, "explicit hours win")
+    check(apply_defaults({"pages": 6, "hours": None})["hours"] == 4, "hours: null → taken from the pages")
+    check(apply_defaults({"pages": "6", "copies": "2"})["a4_bw"] == 12, "numbers given as text are accepted")
+    for bad, why in (({}, "neither pages nor hours"), ({"hours": 0}, "zero hours"), ({"hours": "много"}, "hours is not a number")):
+        try:
+            apply_defaults(bad)
+            check(False, f"{why} → refused")
+        except SystemExit as e:
+            check(str(e).startswith("BAD_INPUT"), f"{why} → BAD_INPUT, no сметка for 0 hours")
+    import openpyxl
+    import build_smetka
+    ws = openpyxl.load_workbook(build_smetka.TEMPLATE).active
+    formula = str(ws["E11"].value).lstrip("=").replace("%", "/100")
+    check(re.fullmatch(r"[0-9.*/ ]+", formula) and abs(eval(formula) - build_smetka.RATE) < 1e-9,  # noqa: S307
+          "the hourly rate in the script equals the formula in the template (E11)")
     tmp = tempfile.mkdtemp()
     data = dict(d, naznachil="разследващ полицай Тест", pri="Първо РУ – Плевен",
                 delo_no="1234/2025", po_opisa_na="РП – Плевен", izvarshena_ot="Иван Дъбов", expert_title="инспектор", izgotvil_short="И. Дъбов",

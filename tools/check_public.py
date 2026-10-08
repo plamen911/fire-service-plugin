@@ -36,9 +36,9 @@ LAST = set("""дъбов липов яворов кестенов брезов �
 ALLOWED_NAMES = {"Веселин Симеонов"}   # the author of „Пожаротехническа експертиза“, cited in the ЕПТЗ template
 
 PATTERNS = {
-    "personal key": re.compile(r"\bfs_[0-9A-Za-z_-]{20,}"),
+    "personal key": re.compile(r"\bfs_[0-9A-Za-z_-]{8,}"),
     "hash or long hex": re.compile(r"\b[0-9a-f]{40,}\b"),
-    "token in an address": re.compile(r"[?&](key|token)=[A-Za-z0-9_-]{12,}"),
+    "token in an address": re.compile(r"[?&](key|token)=[A-Za-z0-9_-]{8,}"),
     "e-mail": re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}"),
     "mobile phone": re.compile(r"(?<!\d)(?:\+359|0)8[789]\d[ \-]?\d{3}[ \-]?\d{3}(?!\d)"),
     "ЕГН": re.compile(r"(?<![\d.])\d{10}(?![\d.])"),

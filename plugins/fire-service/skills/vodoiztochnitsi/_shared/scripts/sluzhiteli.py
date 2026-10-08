@@ -89,8 +89,7 @@ def remote_csv():
     except Exception as e:  # noqa: BLE001  (network, HTTP status, shape)
         raise Unavailable(f"N8N_UNAVAILABLE: списъкът на служителите не се чете ({type(e).__name__})") from None
     try:
-        with open(CACHE, "w", encoding="utf-8") as f:
-            f.write(text)
+        api_config.write_private(CACHE, text)
     except OSError:
         pass
     return text

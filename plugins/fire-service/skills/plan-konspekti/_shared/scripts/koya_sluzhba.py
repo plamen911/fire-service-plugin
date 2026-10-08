@@ -62,8 +62,7 @@ def remote(name):
     except (OSError, KeyError, ValueError) as e:
         sys.exit(f"N8N_UNAVAILABLE: {type(e).__name__}: {e}"[:300])
     try:
-        with open(cache, "w", encoding="utf-8") as f:
-            f.write(text)
+        api_config.write_private(cache, text)
     except OSError:
         pass
     return text

@@ -4,6 +4,9 @@ validate.py — проверява репозиторито преди push (и 
 
     python3 tools/validate.py            # всички проверки + тестовете на скиловете
     python3 tools/validate.py --no-tests # без тестовете
+    python3 tools/validate.py --live     # и със сверка със списъка на служителите от n8n (иска личен ключ)
+
+Без --live проверката не пипа мрежата: личният ключ не се търси и нищо не се сваля от сървъра.
 
 Проверява:
   • marketplace.json и plugin.json са валиден JSON и имената съвпадат;
@@ -33,7 +36,8 @@ PLUGIN = os.path.join(ROOT, "plugins", "fire-service")
 SKILLS = os.path.join(PLUGIN, "skills")
 REQUIRED = ["## Какво е и кога", "## Преди да започнеш", "## Входни данни", "## Работен поток",
             "## Изход", "## Правила за съдържанието", "## Известни ограничения"]
-SECRET = re.compile(r'("password"\s*:\s*"[^"]+")|(ghp_[A-Za-z0-9]{20,})|(github_pat_[A-Za-z0-9_]{20,})')
+SECRET = re.compile(r'("password"\s*:\s*"[^"]+")|(ghp_[A-Za-z0-9]{20,})|(github_pat_[A-Za-z0-9_]{20,})'
+                    r'|(\bfs_[0-9a-f]{16,})|([?&]key=[A-Za-z0-9_-]{8,})')
 errors = []
 
 
@@ -117,6 +121,13 @@ def check_secrets():
         if os.path.isfile(f) and f.endswith((".md", ".py", ".json", ".yml", ".txt")):
             if SECRET.search(open(f, encoding="utf-8", errors="ignore").read()):
                 err(f"possible secret in {os.path.relpath(f, ROOT)}")
+    # the key is personal and never lives in the package: the field must be empty in every copy of the settings
+    for f in glob.glob(os.path.join(PLUGIN, "**", "incident_api.json"), recursive=True):
+        try:
+            if json.load(open(f, encoding="utf-8")).get("key"):
+                err(f"a key is written in {os.path.relpath(f, ROOT)} – the field must stay empty")
+        except ValueError as e:
+            err(f"{os.path.relpath(f, ROOT)}: {e}")
     print("✓ secret scan")
 
 
@@ -200,16 +211,18 @@ def run_tests():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-tests", action="store_true")
+    ap.add_argument("--live", action="store_true", help="сверка и със списъка на служителите от n8n (иска личен ключ)")
     a = ap.parse_args()
+    env = dict(os.environ) if a.live else dict(os.environ, FIRE_SERVICE_NO_KEY="1")
     check_manifests()
     for d in sorted(glob.glob(os.path.join(SKILLS, "*"))):
         if os.path.isdir(d):
             check_skill(d)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "sync_shared.py"), "--check"],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, env=env)
     (print("✓ _shared in sync") if r.returncode == 0 else err(r.stdout.strip()))
     # the repository is public: no personal data, no secrets
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "check_public.py")], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "check_public.py")], capture_output=True, text=True, env=env)
     (print(r.stdout.strip().splitlines()[-1]) if r.returncode == 0 else err("public check:\n" + r.stdout.strip()[-3000:]))
     check_python()
     check_secrets()
