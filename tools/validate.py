@@ -20,7 +20,9 @@ validate.py — проверява репозиторито преди push (и 
   • в хранилището няма лични данни и тайни (tools/check_public.py) – то е публично;
   • в шаблоните на документите няма получер шрифт;
   • шапката в шаблоните е еднаква (shared/conventions.md, „Шапката“);
-  • тестовете в skills/*/tests/ минават.
+  • версията е една и съща в plugin.json, marketplace.json и най-горния запис на CHANGELOG.md;
+  • библиотеките за проверката са с точни версии (requirements-dev.txt), същите като в CI;
+  • тестовете в skills/*/tests/ и в tests/ минават.
 """
 import argparse
 import glob
@@ -76,6 +78,54 @@ def check_manifests():
         if not os.path.isdir(os.path.join(ROOT, p["source"])):
             err(f"marketplace source missing: {p['source']}")
     print("✓ manifests")
+
+
+def check_versions():
+    """One version everywhere: plugin.json, both places in marketplace.json, the top entry of CHANGELOG.md."""
+    try:
+        mk = json.load(open(os.path.join(ROOT, ".claude-plugin", "marketplace.json"), encoding="utf-8"))
+        pl = json.load(open(os.path.join(PLUGIN, ".claude-plugin", "plugin.json"), encoding="utf-8"))
+        log = open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8").read()
+    except (OSError, ValueError) as e:
+        return err(f"versions: {e}")
+    found = {"plugin.json": pl.get("version"), "marketplace.json metadata": (mk.get("metadata") or {}).get("version")}
+    for p in mk.get("plugins", []):
+        if p.get("name") == pl.get("name"):
+            found["marketplace.json plugins[]"] = p.get("version")
+    top = re.search(r"^## (\S+) – (\d{4}-\d{2}-\d{2})\s*$", log, re.M)
+    found["CHANGELOG.md (най-горният запис)"] = top.group(1) if top else None
+    version = pl.get("version")
+    if not version or not re.fullmatch(r"\d+\.\d+\.\d+", str(version)):
+        return err(f"plugin.json: version '{version}' is not X.Y.Z")
+    wrong = {k: v for k, v in found.items() if v != version}
+    if wrong:
+        return err(f"version {version} in plugin.json, but: " + "; ".join(f"{k} = {v}" for k, v in wrong.items()))
+    entries = re.findall(r"^## (\d+\.\d+\.\d+) – ", log, re.M)
+    if len(entries) != len(set(entries)):
+        err("CHANGELOG.md: a version is listed twice")
+    if not log.split(top.group(0), 1)[1].split("\n## ", 1)[0].strip():
+        err(f"CHANGELOG.md: the entry for {version} is empty")
+    print(f"✓ version {version} in the manifests and the changelog")
+
+
+def check_requirements():
+    """The libraries of the check are pinned to exact versions, and CI installs exactly that file."""
+    path = os.path.join(ROOT, "requirements-dev.txt")
+    if not os.path.isfile(path):
+        return err("requirements-dev.txt is missing")
+    lines = [l.strip() for l in open(path, encoding="utf-8") if l.strip() and not l.lstrip().startswith("#")]
+    loose = [l for l in lines if not re.fullmatch(r"[A-Za-z0-9_.-]+==\d+(\.\d+)*", l)]
+    if loose:
+        err("requirements-dev.txt: not pinned to an exact version: " + ", ".join(loose))
+    for wf in glob.glob(os.path.join(ROOT, ".github", "workflows", "*.yml")):
+        text = open(wf, encoding="utf-8").read()
+        for line in re.findall(r"pip install[^\n]*", text):
+            if "-r requirements-dev.txt" not in line:
+                err(f"{os.path.relpath(wf, ROOT)}: „{line.strip()}“ – install with -r requirements-dev.txt")
+        for ref in re.findall(r"python-version:\s*\"?([^\"\s]+)", text):
+            if not re.fullmatch(r"\d+\.\d+", ref):
+                err(f"{os.path.relpath(wf, ROOT)}: python-version {ref} – give major.minor")
+    print(f"✓ {len(lines)} pinned libraries")
 
 
 def check_skill(d):
@@ -197,7 +247,8 @@ def check_letterhead():
 
 
 def run_tests():
-    for t in sorted(glob.glob(os.path.join(SKILLS, "*", "tests", "test_*.py"))):
+    tests = sorted(glob.glob(os.path.join(SKILLS, "*", "tests", "test_*.py"))) + sorted(glob.glob(os.path.join(ROOT, "tests", "test_*.py")))
+    for t in tests:
         r = subprocess.run([sys.executable, t], cwd=os.path.dirname(os.path.dirname(t)),
                            capture_output=True, text=True,
                            env=dict(os.environ, FIRE_SERVICE_NO_KEY="1"))
@@ -215,6 +266,8 @@ def main():
     a = ap.parse_args()
     env = dict(os.environ) if a.live else dict(os.environ, FIRE_SERVICE_NO_KEY="1")
     check_manifests()
+    check_versions()
+    check_requirements()
     for d in sorted(glob.glob(os.path.join(SKILLS, "*"))):
         if os.path.isdir(d):
             check_skill(d)
