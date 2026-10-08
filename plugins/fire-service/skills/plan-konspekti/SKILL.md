@@ -37,6 +37,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/plan-konspekti'),recursive=True)+glob.glob('/mnt/skills/**/plan-konspekti',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md` и `_shared/terminology.md`.
 2. Прочети `references/izlozhenie.md` – как се пише изложението. Той е същината на скила.
 3. Данните на потребителя (изготвил) – по `_shared/profile.md`; директорът идва от списъка на

@@ -40,6 +40,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/vodoiztochnitsi'),recursive=True)+glob.glob('/mnt/skills/**/vodoiztochnitsi',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md` и `_shared/terminology.md`.
 2. Таблицата не е в пакета – пази се в Google Drive и се чете през n8n с личния ключ
    (`_shared/scripts/voda.py` я взима сам и я кешира за 10 минути).

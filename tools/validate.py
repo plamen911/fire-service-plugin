@@ -147,6 +147,9 @@ def check_skill(d):
     for h in REQUIRED:
         if not re.search("^" + re.escape(h), text, re.M):
             err(f"{name}: missing section '{h}'")
+    # the announced base directory may not exist (cloud sessions): each skill carries its own locator
+    if f"/skills/{name}'" not in text or f"/mnt/skills/**/{name}'" not in text:
+        err(f"{name}: no command for locating the skill folder under '## Преди да започнеш'")
     if "_shared/conventions.md" not in text:
         err(f"{name}: does not point to _shared/conventions.md")
     for ref in set(re.findall(r"`((?:references|assets|scripts|_shared|tests)/[^`\s*{}<>]+)`", text)):

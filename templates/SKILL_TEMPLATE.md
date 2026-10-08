@@ -15,6 +15,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/<kebab-case-latinitsa>'),recursive=True)+glob.glob('/mnt/skills/**/<kebab-case-latinitsa>',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md` (общите правила) и `_shared/terminology.md`.
 2. <Специфични референции на скила, ако трябват още в началото.>
 

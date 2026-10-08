@@ -26,6 +26,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/normativna-uredba'),recursive=True)+glob.glob('/mnt/skills/**/normativna-uredba',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md` и `_shared/terminology.md` (там са старите и новите
    съкращения — търси по двата набора).
 2. Базата се чете **само през n8n** със `scripts/regs.py` (с личния ключ –

@@ -34,6 +34,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/tarsene-proizshestviya'),recursive=True)+glob.glob('/mnt/skills/**/tarsene-proizshestviya',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md` и `_shared/terminology.md`.
    **Ако в разговора има инструмент `incidents` (конектор Fire Service)** – взимай данните
    и числата от него, а не със скриптовете: виж `_shared/connector.md` (там е и какво не

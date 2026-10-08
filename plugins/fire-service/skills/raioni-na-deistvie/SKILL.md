@@ -30,6 +30,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/raioni-na-deistvie'),recursive=True)+glob.glob('/mnt/skills/**/raioni-na-deistvie',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md` и `_shared/terminology.md`.
 2. Източниците не са в пакета – пазят се в Google Drive и се четат през n8n с личния ключ:
    - таблицата `naseleni_mesta.csv` – всяко населено място по ЕКАТТЕ 2025 → РДПБЗН, РСПБЗН,

@@ -47,6 +47,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/eptz'),recursive=True)+glob.glob('/mnt/skills/**/eptz',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md`, `_shared/terminology.md` и `_shared/profile.md` и вземи
    данните на потребителя по него (`whoami` / `sluzhiteli.py --profil`) – експертът е той.
 2. Инсталирай зависимостите, ако липсват: `pip install -r requirements.txt`

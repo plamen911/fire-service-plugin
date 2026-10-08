@@ -39,6 +39,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/spravka-prichina'),recursive=True)+glob.glob('/mnt/skills/**/spravka-prichina',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md`, `_shared/terminology.md` и `_shared/profile.md`.
 2. Вземи данните на потребителя по `_shared/profile.md` (`whoami` / `sluzhiteli.py --profil`)
    – от тях са името, длъжността в увода (`spravka_uvod`) и званието под „ИЗГОТВИЛ:“

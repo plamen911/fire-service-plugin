@@ -43,6 +43,13 @@ description: >-
 
 ## Преди да започнеш
 
+Командите се пускат от папката на скила. Ако папката, обявена при зареждането му, не
+съществува, не търси из целия диск – намери я с тази команда и работи от първия ред, който върне:
+
+```bash
+python3 -c "import glob,os;print('\n'.join(glob.glob(os.path.expanduser('~/.claude/plugins/**/skills/grafik-dezhurstva'),recursive=True)+glob.glob('/mnt/skills/**/grafik-dezhurstva',recursive=True)))"
+```
+
 1. Прочети `_shared/conventions.md` и `_shared/terminology.md`.
 2. При снимка на график прочети `references/reading.md` – рязане на снимката, формат на
    преписа, кодовете и шрифтовете на двата вида графици.
@@ -67,6 +74,7 @@ description: >-
 | Въпрос | Команда |
 |---|---|
 | Кога съм дежурен? | `python3 _shared/scripts/grafik.py sluzhitel --az --mesec 2026-10` |
+| С кои колеги съм дежурен? | `sluzhitel --az` за датите, после `na-data` **само за следващото дежурство**; останалите дати – при поискване (всяка е отделна заявка) |
 | Кога е на смяна Иван Петров? | `python3 _shared/scripts/grafik.py sluzhitel "Иван Петров" --mesec 2026-10` |
 | Кои са дежурни на 04.10.2026? | `python3 _shared/scripts/grafik.py na-data 2026-10-04` |
 | Кой е на смяна в 03:30 ч. на 4-ти? | `python3 _shared/scripts/grafik.py na-data 2026-10-04 --chas 03:30` |
