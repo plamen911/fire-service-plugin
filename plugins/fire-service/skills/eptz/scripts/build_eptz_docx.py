@@ -7,8 +7,11 @@ build_eptz_docx.py (v3) — генерира ЕПТЗ .docx, като КЛОНИ
 таблици за подпис „ЕКСПЕРТ“ и „Изготвил“, номерирана литература).
 
 Употреба:
-  python build_eptz_docx.py --content report.md --meta meta.json --out EPTZ.docx [--final]
+  python build_eptz_docx.py --content report.md --meta meta.json --out EPTZ.docx
   [--template path/to/eptz_template.docx]
+
+Документът няма маркировка „ЧЕРНОВА“ – излиза направо готов за преглед и подпис. Параметърът
+--final се приема заради старите извиквания и не променя нищо.
 
 meta.json: виж assets/eptz_meta.example.json. Прокуратурата се задава с "prokuratura"
 (напр. "ОП – Плевен"); без него се ползва "РП – {rp_grad}".
@@ -202,7 +205,7 @@ def build(content, meta, out, final, template):
             rs = el.findall(qn("w:r")); rs[-1].find(qn("w:t")).text = f" {m(meta,'expert_education','Висше')}."
         elif s.startswith("Специалност:"):
             rs = el.findall(qn("w:r")); rs[-1].find(qn("w:t")).text = f" „{m(meta,'expert_specialnost','Пожарна и аварийна безопасност')}“."
-        elif s.startswith("ЧЕРНОВА") and final:
+        elif s.startswith("ЧЕРНОВА"):   # a template made before 2.4.3 still carries the notice
             body.remove(el)
     lh = doc.tables[0]
     replace_in(lh._tbl, "– ПЛЕВЕН", f"– {m(meta,'rd_grad','Плевен').upper()}")
@@ -239,22 +242,22 @@ def build(content, meta, out, final, template):
         for it in items[1:]:
             e = clone(proto, it); cur.addnext(e); cur = e
 
-    # ---- чернова в колонтитула ----
+    # ---- no draft notice in the footer either (templates made before 2.4.3) ----
     for sec in doc.sections:
         for f in (sec.footer, sec.first_page_footer, sec.even_page_footer):
             for p in f._element.iter(qn("w:p")):
                 for r in p.findall(qn("w:r")):
                     t = r.find(qn("w:t"))
-                    if t is not None and "ЧЕРНОВА" in (t.text or "") and final:
+                    if t is not None and "ЧЕРНОВА" in (t.text or ""):
                         p.remove(r)
     typo_all(doc, qn("w:t"))
     doc.save(out)
-    print(f"✅ {out}  {'[ФИНАЛЕН]' if final else '[ЧЕРНОВА]'}")
+    print(f"✅ {out}")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--content", required=True); ap.add_argument("--meta")
-    ap.add_argument("--out", required=True); ap.add_argument("--final", action="store_true")
+    ap.add_argument("--out", required=True); ap.add_argument("--final", action="store_true", help="без действие – приема се заради старите извиквания")
     ap.add_argument("--template", default=DEFAULT_TEMPLATE)
     a = ap.parse_args()
     meta = json.load(open(a.meta, encoding="utf-8")) if a.meta else {}

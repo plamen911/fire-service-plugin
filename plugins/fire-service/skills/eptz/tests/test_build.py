@@ -73,8 +73,9 @@ def test_eptz():
     for h in ["I. Основание", "II. Представен", "III. Обстоятелства", "IV. Поставени", "V. Пожаро"]:
         check(h in t_f, f"section '{h}' present")
     check("Отговор на въпрос № 3" in t_f, "all 3 answers present")
-    check("ЧЕРНОВА" in t_d, "draft carries ЧЕРНОВА")
-    check("ЧЕРНОВА" not in t_f, "final has no ЧЕРНОВА")
+    check("ЧЕРНОВА" not in t_d, "no ЧЕРНОВА notice without --final")
+    check("ЧЕРНОВА" not in t_f, "no ЧЕРНОВА notice with --final")
+    check(t_d == t_f, "--final changes nothing")
     check("ОП – Плевен" in t_f, "prokuratura override used")
     check("по описа на РП -" not in t_f, "no hardcoded РП when prokuratura is set")
     check("**" not in t_f, "no markdown bold left")
