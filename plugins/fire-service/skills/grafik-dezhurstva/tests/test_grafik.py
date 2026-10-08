@@ -358,6 +358,62 @@ def test_concurrent_save(tmp):
     print("  ok  concurrent save: the colleague's rows survive")
 
 
+def test_conditional_save(tmp):
+    """Through n8n the write is conditional: put sends the md5 that get saw ("new" when there was no file);
+    on 409 CONFLICT the month is read again, merged again and saved with the fresh md5."""
+    import argparse
+    import contextlib
+    import hashlib
+    import io
+    import urllib.error
+    os.environ.update(FIRE_SERVICE_NO_KEY="1", FIRE_SERVICE_STAFF_CSV=STAFF)
+    sys.path.insert(0, os.path.dirname(SCRIPT))
+    import grafik
+    grafik.sluzhiteli.STAFF_FILE = STAFF
+
+    doc = json.load(open(OC, encoding="utf-8"))
+    rows = [dict(r, nomer=i) for i, r in enumerate(doc["redove"], 1)]
+    half_a = reading(tmp, "ca.json", dict(doc, redove=rows[:3]))
+    half_b = reading(tmp, "cb.json", dict(doc, redove=rows[3:]))
+    other = os.path.join(tmp, "other")                 # the colleague's half, as it will be stored
+    code, r = js(other, "import", half_a)
+    assert code == 0, r
+    colleague = open(os.path.join(other, "oc", "2026-10.json"), encoding="utf-8").read()
+
+    server = {"text": None}                            # the month file "in Drive"
+    puts = []
+    md5 = lambda t: hashlib.md5(t.encode()).hexdigest()
+
+    def post(which, body, timeout=30):
+        assert which == "duty_url", which
+        now = md5(server["text"]) if server["text"] else "new"
+        if body["action"] == "get":
+            if server["text"] is None:
+                raise urllib.error.HTTPError("u", 404, "x", {}, io.BytesIO(b'{"error":"NOT_FOUND: no schedule"}'))
+            return {"text": server["text"], "md5": now}
+        puts.append(body.get("if_md5"))
+        if len(puts) == 1:                             # the colleague saves between our last read and our write
+            server["text"] = colleague
+            now = md5(colleague)
+        if body.get("if_md5") != now:
+            raise urllib.error.HTTPError("u", 409, "x", {}, io.BytesIO(b'{"error":"CONFLICT: changed"}'))
+        server["text"] = body["text"]
+        return {"ok": True, "md5": md5(body["text"]), "link": "drive"}
+
+    store = grafik.RemoteStore.__new__(grafik.RemoteStore)
+    store.cfg, store.seen = {"key": "k", "duty_url": "u"}, {}
+    real, grafik.api_config.post = grafik.api_config.post, post
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            grafik.cmd_import(argparse.Namespace(reading=half_b, replace=False, dry_run=False), store)
+    finally:
+        grafik.api_config.post = real
+    saved = json.loads(server["text"])
+    assert puts == ["new", md5(colleague)], puts       # first "there was no file", then the fresh fingerprint
+    assert len(saved["sluzhiteli"]) == 6, [x["ime"] for x in saved["sluzhiteli"]]
+    print("  ok  conditional save: if_md5 is sent, a conflict is merged and saved again")
+
+
 def main():
     tmp = tempfile.mkdtemp()
     try:
@@ -369,6 +425,7 @@ def main():
         test_store(tmp, store)
         test_tiles(tmp)
         test_concurrent_save(tmp)
+        test_conditional_save(tmp)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print("OK grafik-dezhurstva")

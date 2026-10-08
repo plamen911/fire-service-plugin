@@ -67,6 +67,10 @@ class Problem(Exception):
     """Something the user has to fix or know; the message is shown as is."""
 
 
+class Conflict(Problem):
+    """The stored month is not the one that was read: somebody saved it meanwhile and nothing was written."""
+
+
 def norm(text):
     return re.sub(r"\s+", " ", str(text or "").lower().replace("ѝ", "й").replace("ё", "е")).strip()
 
@@ -194,6 +198,7 @@ class RemoteStore:
             raise Problem(api_config.NO_KEY + " – инструментите duty и duty_save, после --store ПАПКА")
         if not self.cfg.get("duty_url"):
             raise Problem("N8N_UNAVAILABLE: в incident_api.json няма duty_url")
+        self.seen = {}   # (grafik, month) → md5 of the stored file as last read; "new" when there was none
 
     def _call(self, body):
         try:
@@ -202,6 +207,9 @@ class RemoteStore:
             detail = e.read().decode(errors="ignore")[:300]
             if e.code == 404 and "NOT_FOUND" in detail:
                 return None
+            if e.code == 409:
+                raise Conflict("CONFLICT: графикът е записан от друг след прочитането – нищо не е записано; "
+                               "пусни записа отново") from None
             if e.code == 404:
                 raise Problem("N8N_UNAVAILABLE: n8n не познава адреса за графиците (fire-duty) – "
                               "workflow-ът „Fire Service API (skills)“ не е обновен") from None
@@ -215,10 +223,18 @@ class RemoteStore:
 
     def get(self, grafik, month):
         res = self._call({"action": "get", "grafik": grafik, "mesec": month})
+        self.seen[(grafik, month)] = str((res or {}).get("md5") or "") if res else "new"
         return canonical_text(res["text"]) if res else None
 
     def put(self, grafik, month, text):
-        res = self._call({"action": "put", "grafik": grafik, "mesec": month, "text": text})
+        """Writes only if the stored file is still the one get() saw (if_md5): n8n answers 409 otherwise
+        and nothing is written – so two people saving the same month never overwrite each other."""
+        body = {"action": "put", "grafik": grafik, "mesec": month, "text": text}
+        if self.seen.get((grafik, month)):
+            body["if_md5"] = self.seen[(grafik, month)]
+        res = self._call(body)
+        if (res or {}).get("md5"):
+            self.seen[(grafik, month)] = str(res["md5"])
         return (res or {}).get("link") or self.where(grafik, month)
 
     def where(self, grafik, month):
@@ -427,7 +443,8 @@ def cmd_import(a, store):
 
     # Read – merge – write. Somebody else may save the same month in between (a colleague uploading the other
     # half of the roster): just before writing the month is read again and, if it has changed, the merge is
-    # redone over the fresh copy, so the other person's rows are not lost.
+    # redone over the fresh copy, so the other person's rows are not lost. Through n8n the write itself is
+    # conditional as well (RemoteStore.put → Conflict): the month that was merged must still be the stored one.
     current = store.get(grafik, month)
     for attempt in range(3):
         old = json.loads(current) if current else None
@@ -462,7 +479,13 @@ def cmd_import(a, store):
         if latest != current and attempt < 2:
             current = latest          # the month was saved by someone else meanwhile – merge again
             continue
-        where = store.put(grafik, month, text)
+        try:
+            where = store.put(grafik, month, text)
+        except Conflict:
+            if attempt == 2:
+                raise
+            current = store.get(grafik, month)
+            continue
         break
     out({
         "ok": True, "grafik": grafik, "mesec": month, "store": store.name, "file": where,
