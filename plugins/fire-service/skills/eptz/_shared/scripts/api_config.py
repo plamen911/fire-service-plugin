@@ -22,6 +22,8 @@ import os
 import re
 import sys
 import urllib.error
+import socket
+import time
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -106,6 +108,9 @@ def profile():
     return dict(_key_skill().get("profile") or {})
 
 
+RETRY_PAUSE = 2   # seconds before the single second attempt
+
+
 def write_private(path, text):
     """Write a cached copy of server data so that only its owner can read it (0600), never group or others."""
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
@@ -127,15 +132,35 @@ def request(url_field, body, timeout=60):
 
 
 def post(url_field, body, timeout=60):
-    """POST to an endpoint → parsed JSON. A rejected key ends with KEY_REJECTED; other HTTP errors are raised."""
+    """POST to an endpoint → parsed JSON. A rejected key ends with KEY_REJECTED; other HTTP errors are raised.
+
+    One more attempt is made, after a short pause, only when the request certainly did not reach n8n – the
+    connection could not be opened, or the proxy in front answered 502/503. A timeout is never repeated: the
+    request may have been carried out (a second write would duplicate it)."""
+    for attempt in (1, 2):
+        try:
+            with urllib.request.urlopen(request(url_field, body), timeout=timeout) as r:
+                raw = r.read()
+            break
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403):
+                sys.exit(f"KEY_REJECTED: n8n не приема личния ключ (от {load()['key_source']}) – "
+                         "провери реда `key:` в скила fire-service-key или поискай нов ключ от администратора.")
+            if e.code in (502, 503) and attempt == 1:
+                time.sleep(RETRY_PAUSE)
+                continue
+            raise
+        except urllib.error.URLError as e:
+            refused = isinstance(e.reason, (ConnectionRefusedError, socket.gaierror))
+            if refused and attempt == 1:
+                time.sleep(RETRY_PAUSE)
+                continue
+            raise
     try:
-        with urllib.request.urlopen(request(url_field, body), timeout=timeout) as r:
-            return json.load(r)
-    except urllib.error.HTTPError as e:
-        if e.code in (401, 403):
-            sys.exit(f"KEY_REJECTED: n8n не приема личния ключ (от {load()['key_source']}) – "
-                     "провери реда `key:` в скила fire-service-key или поискай нов ключ от администратора.")
-        raise
+        return json.loads(raw)
+    except ValueError:
+        start = raw[:80].decode("utf-8", "replace").replace("\n", " ")
+        raise ValueError(f"сървърът върна отговор, който не е JSON (започва с „{start}“)") from None
 
 
 if __name__ == "__main__":

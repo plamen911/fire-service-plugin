@@ -45,6 +45,7 @@ Errors (stderr, exit code ≠ 0):
     BAD_REQUEST: ...  — unknown field, more than two --group-by, bad --top
 """
 import argparse
+import os
 import datetime as dt
 import json
 import re
@@ -366,6 +367,20 @@ def stats(rows, group_by, compare_field=None, top=None, count_only=False, droppe
     return out
 
 
+def truncated(paths):
+    """Files that fetch_incidents.py marked as cut short (`<file>.meta.json` with "truncated": true)."""
+    out = []
+    for p in paths:
+        try:
+            with open(p + ".meta.json", encoding="utf-8") as fh:
+                m = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        if isinstance(m, dict) and m.get("truncated"):
+            out.append({"file": os.path.basename(p), "returned": m.get("returned"), "total": m.get("total")})
+    return out
+
+
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(description="Counts and groupings over pleven-fire-incidents records.")
     ap.add_argument("records", nargs="+", help="JSON file(s) from fetch_incidents.py -o")
@@ -391,6 +406,11 @@ def main(argv=None):
     for f in a.group_by + ([a.compare_field] if a.compare_field else []):
         check_field(f, rows)
     result = stats(rows, a.group_by, a.compare_field, a.top, a.count_only, dropped, len(a.records))
+    cut = truncated(a.records)
+    if cut:   # fetch_incidents.py left a note: the file holds fewer records than the period has
+        result["truncated"] = cut
+        result["warning"] = ("НЕПЪЛНИ ДАННИ: файлът съдържа по-малко записи, отколкото има за периода – "
+                             "числата са занижени. Свали периода на части или с по-голям --limit.")
     text = json.dumps(result, ensure_ascii=False, indent=1)
     if a.output:
         with open(a.output, "w", encoding="utf-8") as fh:

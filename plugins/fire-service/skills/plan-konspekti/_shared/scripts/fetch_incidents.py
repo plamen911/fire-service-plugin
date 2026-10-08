@@ -128,6 +128,14 @@ def main():
     if a.output:
         with open(a.output, "w", encoding="utf-8") as fh:
             json.dump(rows, fh, ensure_ascii=False, indent=1)
+        # a note beside the file, so that whoever counts the records later knows the list was cut
+        meta = a.output + ".meta.json"
+        if total > len(rows):
+            with open(meta, "w", encoding="utf-8") as fh:
+                json.dump({"from": a.date_from, "to": a.date_to, "returned": len(rows), "total": total,
+                           "truncated": True}, fh, ensure_ascii=False)
+        elif os.path.exists(meta):
+            os.remove(meta)
         print(json.dumps({"output": a.output, "from": a.date_from, "to": a.date_to,
                           "returned": len(rows), "total": total, "truncated": total > len(rows)},
                          ensure_ascii=False))
