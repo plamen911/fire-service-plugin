@@ -20,6 +20,8 @@ grafik.py — месечните графици за дежурства на Р�
     python3 _shared/scripts/grafik.py sluzhitel "Петров" --mesec 2026-10
     python3 _shared/scripts/grafik.py praznichni --az --mesec 2026-12  # празнични дни и часове в месеца
     python3 _shared/scripts/grafik.py praznitsi 2026                   # официалните празници
+    python3 _shared/scripts/grafik.py pri-proizshestvie --zapis rec.json   # кой е бил на смяна при произшествие
+    python3 _shared/scripts/grafik.py dopalni oc 2026-10               # длъжност и звание към стар запис на месец
     python3 _shared/scripts/grafik.py spisak                           # кои графици и месеци има
     python3 _shared/scripts/grafik.py proverka                         # записаните файлове са в каноничен вид
 
@@ -35,6 +37,10 @@ grafik.py — месечните графици за дежурства на Р�
 Идемпотентност: ключът е (график, месец, служител). Един и същ препис, импортиран колкото и
 пъти да е, дава един и същ файл до байт – без дата на запис, с подреден ред и подредени
 ключове. Всички команди отговарят с JSON, освен `mesec` (таблица).
+
+При запис в реда на всеки служител остават и краткото име, длъжността и званието от поименното
+разписание към този момент. Така въпрос за минал месец дава човека както всички останали и след
+като е напуснал или е преназначен; днешното разписание не пренаписва миналото.
 """
 import argparse
 import calendar
@@ -251,6 +257,37 @@ def load_month(store, grafik, month):
 
 # ── roster matching ──────────────────────────────────────────────────────────
 
+SNAPSHOT = ("ime_kratko", "dlazhnost", "zvanie")   # kept in the stored row: who the person was that month
+
+
+def short_name(full):
+    parts = str(full).split()
+    return " ".join([parts[0], parts[-1]]) if len(parts) > 1 else str(full)
+
+
+def snapshot(person):
+    """What the staff list says about a person at the moment the month is saved. It stays in the month file,
+    so a question about a past month still gives the name, position and rank after the person has left
+    (or was promoted) and the staff list no longer says so."""
+    snap = {"ime_kratko": person.get("ime_kratko") or short_name(person["ime"]),
+            "dlazhnost": person.get("zaemana_dlazhnost") or person.get("dlazhnost_po_shtat") or "",
+            "zvanie": person.get("zvanie") or ""}
+    return {k: v for k, v in snap.items() if v}
+
+
+def with_snapshot(row, person):
+    """The stored row with the snapshot right after the name (stable key order)."""
+    rest = {k: v for k, v in row.items() if k != "ime" and k not in SNAPSHOT}
+    return {"ime": row["ime"], **snapshot(person), **rest}
+
+
+def schedule_person(row):
+    """A person known only from a stored schedule row, in the shape of a staff-list row."""
+    return {"ime": row["ime"], "ime_kratko": row.get("ime_kratko") or short_name(row["ime"]),
+            "zveno": "", "uchastak": "", "podrazdelenie": "", "zaemana_dlazhnost": row.get("dlazhnost", ""),
+            "dlazhnost_po_shtat": "", "zvanie": row.get("zvanie", ""), "status": "заета", "ot_grafika": True}
+
+
 def roster(store=None):
     """The staff list. Without it (a colleague with the connector and no --roster file) a question
     about duties still works: the people are then the names written in the stored schedules.
@@ -269,10 +306,7 @@ def roster(store=None):
             if key in seen:
                 continue
             seen.add(key)
-            parts = row["ime"].split()
-            rows.append({"ime": row["ime"], "ime_kratko": " ".join([parts[0], parts[-1]]) if len(parts) > 1 else row["ime"],
-                         "zveno": "", "uchastak": "", "podrazdelenie": "", "zaemana_dlazhnost": "",
-                         "dlazhnost_po_shtat": "", "zvanie": "", "status": "заета", "ot_grafika": True})
+            rows.append(schedule_person(row))
     return rows
 
 
@@ -387,6 +421,8 @@ def canonical_rows(reading, rows, kind, last_day):
 
         person, how, candidates = match_name(written, rows, kind)
         row = {"ime": person["ime"] if person else written, "v_razpisanieto": bool(person), "nomer": number}
+        if person:
+            row = with_snapshot(row, person)
         if person and norm(person["ime"]) != norm(written):
             row["kakto_e_v_grafika"] = written
         shift = str(line.get("smyana") or "").strip()
@@ -439,7 +475,9 @@ def cmd_import(a, store):
     if kind is None:
         raise Problem(f"Непознат график „{grafik}“. Познатите са в grafici.json: {', '.join(sorted(kinds))}. "
                       f"Нов вид се добавя там.")
-    new_rows, notes = canonical_rows(reading, roster(), kind, last_day_of(month))
+    people = roster()
+    by_full = {norm(r["ime"]): r for r in people}
+    new_rows, notes = canonical_rows(reading, people, kind, last_day_of(month))
 
     # Read – merge – write. Somebody else may save the same month in between (a colleague uploading the other
     # half of the roster): just before writing the month is read again and, if it has changed, the merge is
@@ -459,8 +497,18 @@ def cmd_import(a, store):
             if a.replace or r["nomer"] in numbers:
                 removed.append(r["ime"])
             else:
-                kept.append(r)
+                # a row saved before the snapshot existed gets it now, while the person is still in the list;
+                # a row that has one keeps it – it says who the person was when the month was saved
+                known = by_full.get(norm(r["ime"]))
+                kept.append(with_snapshot(r, known) if known and not any(r.get(k) for k in SNAPSHOT) else r)
         before = {norm(r["ime"]): r for r in old_rows}
+        for i, r in enumerate(new_rows):
+            # the page is read again after the person has left the staff list: what the month already
+            # keeps about him (short name, position, rank) is not lost
+            was = before.get(norm(r["ime"]))
+            if was and not any(r.get(k) for k in SNAPSHOT) and any(was.get(k) for k in SNAPSHOT):
+                new_rows[i] = {"ime": r["ime"], **{k: was[k] for k in SNAPSHOT if was.get(k)},
+                               **{k: v for k, v in r.items() if k != "ime"}}
         added = [r["ime"] for r in new_rows if norm(r["ime"]) not in before]
         updated = [r["ime"] for r in new_rows if norm(r["ime"]) in before and before[norm(r["ime"])] != r]
 
@@ -570,18 +618,31 @@ def fmt(moment):
     return moment.strftime("%Y-%m-%d %H:%M")
 
 
-def person_info(name, by_name, kind=None, place=None):
-    """Position and rank from the roster; the unit from the schedule. The schedule wins over the
-    roster: someone listed in the schedule of another unit is temporarily moved there, so `zveno` is
-    the place of the duty (when the code says it) or the unit of the schedule, and the roster's unit
-    is given only when it differs (`po_razpisanie_e_v`)."""
+def person_info(name, by_name, kind=None, place=None, row=None):
+    """Position and rank; the unit from the schedule. The schedule wins over the staff list: someone listed
+    in the schedule of another unit is temporarily moved there, so `zveno` is the place of the duty (when
+    the code says it) or the unit of the schedule, and the staff list's unit is given only when it differs
+    (`po_razpisanie_e_v`).
+    `row` is the stored schedule row. Its snapshot (short name, position, rank as they were when the month
+    was saved) wins over today's staff list, and is all there is for someone who has left since – such a
+    person is shown like everyone else, with `ne_e_v_razpisanieto: true`."""
     r = by_name.get(norm(name))
-    if not r:
-        return {"zveno": place or kind["zveno"]} if kind else {}
-    if r.get("ot_grafika"):  # no staff list at hand: only what the schedule itself says
-        return {"ime_kratko": r["ime_kratko"], **({"zveno": place or kind["zveno"]} if kind else {})}
-    info = {"ime_kratko": r["ime_kratko"], "dlazhnost": r["zaemana_dlazhnost"] or r["dlazhnost_po_shtat"],
-            "zvanie": r["zvanie"]}
+    snap = {k: row[k] for k in SNAPSHOT if row and row.get(k)}
+    if not r or r.get("ot_grafika"):  # not in today's staff list (left since), or no staff list at hand
+        base = schedule_person({"ime": name, **snap}) if not r else r
+        info = {"ime_kratko": snap.get("ime_kratko") or base["ime_kratko"]}
+        for key, value in (("dlazhnost", snap.get("dlazhnost") or base["zaemana_dlazhnost"]),
+                           ("zvanie", snap.get("zvanie") or base["zvanie"])):
+            if value:
+                info[key] = value
+        if kind:
+            info["zveno"] = place or kind["zveno"]
+        if not r and any(not x.get("ot_grafika") for x in by_name.values()):
+            info["ne_e_v_razpisanieto"] = True
+        return info
+    info = {"ime_kratko": snap.get("ime_kratko") or r["ime_kratko"],
+            "dlazhnost": snap.get("dlazhnost") or r["zaemana_dlazhnost"] or r["dlazhnost_po_shtat"],
+            "zvanie": snap.get("zvanie") or r["zvanie"]}
     if kind is None:
         info["zveno"] = r["uchastak"] or r["zveno"]
         if r.get("podrazdelenie"):
@@ -615,6 +676,17 @@ def resolve_person(a, store, rows):
     if not query:
         raise Problem("Дай име на служител или --az")
     found = find_person(query, rows)
+    if not found and not (rows and rows[0].get("ot_grafika")):
+        # not in today's staff list – someone who has left is still in the schedules of the months he worked
+        month = getattr(a, "mesec", None) or datetime.date.today().strftime("%Y-%m")
+        seen, former = set(), []
+        for grafik in sorted(registry()):
+            for m in (month, previous_month(month)) if MONTH_RE.match(month) else ():
+                for row in (load_month(store, grafik, m) or {}).get("sluzhiteli", []):
+                    if norm(row["ime"]) not in seen:
+                        seen.add(norm(row["ime"]))
+                        former.append(dict(schedule_person(row), napusnal=True))
+        found = find_person(query, former)
     if not found:
         raise Problem(f"„{query}“ го няма в поименното разписание"
                       + (" и в записаните графици" if rows and rows[0].get("ot_grafika") else ""))
@@ -665,7 +737,10 @@ def cmd_sluzhitel(a, store):
                        **({"smyana": row["smyana"]} if row.get("smyana") else {}),
                        "dezhurstva": duties, "broi_dezhurstva": len(duties),
                        "chasove_obshto": sum(d["chasove"] for d in duties), "drugi": other})
-    info = person_info(person["ime"], {norm(person["ime"]): person}, current[0][1] if current else None)
+    info = person_info(person["ime"], {norm(person["ime"]): person}, current[0][1] if current else None,
+                       row=current[0][3] if current else None)
+    if person.get("napusnal"):
+        info["ne_e_v_razpisanieto"] = True
     out({"ok": True, "sluzhitel": person["ime_kratko"], "mesec": month, **info,
          "grafici": result,
          **({} if result else {"belezhka": f"Няма го в записан график за {month}"})})
@@ -727,11 +802,20 @@ def cmd_na_data(a, store):
             raise Problem("Часът е във вида ЧЧ:ММ")
         hour, minute = int(hm.group(1)), int(hm.group(2))
     moment = datetime.datetime.combine(day, datetime.time(hour, minute))
-    month = a.date[:7]
+    result, missing = duty_at(store, moment, [a.grafik] if a.grafik else None, a.vsichki)
+    out({"ok": True, "kam": fmt(moment), "den": DAYS[day.weekday()],
+         **({"praznik": holidays(day.year)[day]} if day in holidays(day.year) else {}),
+         "grafici": result, "nyama_grafik_za_mesetsa": missing})
+    return 0
+
+
+def duty_at(store, moment, grafici=None, vsichki=False):
+    """Who is on duty at `moment` by the stored schedules → ([per schedule], [schedules with no month])."""
+    month = moment.strftime("%Y-%m")
     kinds = registry()
     by_name = {norm(r["ime"]): r for r in roster(store)}
     result, missing = [], []
-    for grafik in ([a.grafik] if a.grafik else sorted(kinds)):
+    for grafik in (grafici or sorted(kinds)):
         kind = kinds.get(grafik)
         if kind is None:
             raise Problem(f"Непознат график „{grafik}“")
@@ -747,24 +831,132 @@ def cmd_na_data(a, store):
                         **({"smyana": row["smyana"]} if row.get("smyana") else {})}
                 for s in shifts_of(row, kind, mm):
                     if s["start"] <= moment < s["end"]:
-                        entry = {**base, **person_info(row["ime"], by_name, kind, s["myasto"]),
+                        entry = {**base, **person_info(row["ime"], by_name, kind, s["myasto"], row),
                                  "kod": s["kod"], "ot": fmt(s["start"]), "do": fmt(s["end"]),
                                  **({"myasto": s["myasto"]} if s["myasto"] else {})}
                         (on_duty if s["dezhurstvo"] else working).append(entry)
-                if mm == month and a.vsichki:
+                if mm == month and vsichki:
                     code = code_on(row, moment.day)
                     if code and "chasove" not in kind["kodove"].get(code, {}):
-                        others.append({**base, **person_info(row["ime"], by_name, kind), "kod": code,
+                        others.append({**base, **person_info(row["ime"], by_name, kind, row=row), "kod": code,
                                        "znachenie": kind["kodove"].get(code, {}).get("znachenie", "")})
         entry = {"grafik": grafik, "ime_na_grafika": kind["ime"], "dezhurni": on_duty}
+        if moment.day == 1 and moment.hour < SHIFT_START and docs[0][1] is None:
+            entry["belezhka"] = (f"Преди 08:00 ч. на 1-ви на смяна е дежурството от последния ден на "
+                                 f"{previous_month(month)}, а за този месец няма записан график")
         if working:
             entry["na_rabota_bez_dezhurstvo"] = working
-        if a.vsichki:
+        if vsichki:
             entry["otsastvat"] = others
         result.append(entry)
-    out({"ok": True, "kam": fmt(moment), "den": DAYS[day.weekday()],
-         **({"praznik": holidays(day.year)[day]} if day in holidays(day.year) else {}),
-         "grafici": result, "nyama_grafik_za_mesetsa": missing})
+    return result, missing
+
+
+# ── who was on shift at an incident ──────────────────────────────────────────
+
+UNIT_RE = re.compile(r"\b(РС|У)\s*ПБЗН\s*[-–]\s*([А-Яа-я][А-Яа-я .]*[А-Яа-я])")
+
+
+PLACE_NAMES = {"червен бряг": "Червен бряг"}   # the second word is not capitalised
+
+
+def units_in(text):
+    """„РС ПБЗН - Плевен“, „У ПБЗН - Сторгозия“ in a record → ["РСПБЗН – Плевен", "УПБЗН – Сторгозия"]."""
+    found = []
+    for kind, place in UNIT_RE.findall(str(text or "")):
+        place = PLACE_NAMES.get(norm(place)) or " ".join(w.capitalize() for w in place.split())
+        name = f"{kind}ПБЗН – {place}"
+        if name not in found:
+            found.append(name)
+    return found
+
+
+def moment_of(value, what):
+    """„2026-10-04 03:30:00“, „2026-10-04T03:30“, „04.10.2026 03:30“ → datetime."""
+    text = str(value or "").strip()
+    for pattern, order in ((r"^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2})[:.](\d{2})", (1, 2, 3, 4, 5)),
+                           (r"^(\d{1,2})\.(\d{1,2})\.(\d{4})\D+(\d{1,2})[:.](\d{2})", (3, 2, 1, 4, 5))):
+        m = re.match(pattern, text)
+        if m:
+            try:
+                return datetime.datetime(*(int(m.group(i)) for i in order))
+            except ValueError:
+                break
+    raise Problem(f"{what}: „{text}“ не е дата и час (ГГГГ-ММ-ДД ЧЧ:ММ)")
+
+
+def cmd_pri_proizshestvie(a, store):
+    record = {}
+    if a.zapis:
+        try:
+            with open(a.zapis, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, ValueError) as e:
+            raise Problem(f"Записът не се чете: {e}") from None
+        if isinstance(data, dict) and isinstance(data.get("records"), list):
+            data = data["records"]
+        if isinstance(data, list):
+            if a.id:
+                data = [r for r in data if str(r.get("id")) == str(a.id)]
+            if len(data) != 1:
+                raise Problem(f"Във файла има {len(data)} записа – дай --id на произшествието")
+            data = data[0]
+        if not isinstance(data, dict) or not data.get("dat"):
+            raise Problem("Записът няма дата и час („dat“)")
+        record = data
+        start = moment_of(record["dat"], "dat")
+    elif a.data and a.chas:
+        start = moment_of(f"{a.data} {a.chas}", "--data и --chas")
+    else:
+        raise Problem("Дай --zapis ФАЙЛ (записът на произшествието) или --data ГГГГ-ММ-ДД и --chas ЧЧ:ММ")
+    end = None
+    for field in ("dat_o2", "closed", "dat_o1"):   # back at the station; else the end of the work on the spot
+        if record.get(field):
+            try:
+                end = moment_of(record[field], field)
+                break
+            except Problem:
+                continue
+    units = units_in(a.sluzhba) or ([a.sluzhba.strip()] if a.sluzhba else [])
+    for text in (record.get("unit"), record.get("forces")):
+        units += [u for u in units_in(text) if u not in units]
+
+    kinds = registry()
+    places = {g: {k["zveno"]} | {c["myasto"] for c in k["kodove"].values() if c.get("myasto")} for g, k in kinds.items()}
+    covered = set().union(*places.values())
+    wanted = [g for g in sorted(kinds) if kinds[g].get("podrazdelenie") or places[g] & set(units)]
+
+    def lookup(moment):
+        result, missing = duty_at(store, moment, wanted)
+        for entry in result:
+            if kinds[entry["grafik"]].get("podrazdelenie"):   # the operations centre: everyone on shift
+                continue
+            mine, elsewhere = [], []
+            for person in entry["dezhurni"]:
+                (mine if not person.get("myasto") or person["myasto"] in units else elsewhere).append(person)
+            entry["dezhurni"] = mine
+            if elsewhere:
+                entry["dezhurni_v_drugi_zvena"] = elsewhere
+        return result, missing
+
+    result, missing = lookup(start)
+    answer = {"ok": True, "kam": fmt(start), "den": DAYS[start.weekday()]}
+    if record:
+        answer["proizshestvie"] = {k: record[k] for k in ("id", "num_event", "dat", "casulaty", "unit", "address",
+                                                          "location", "object", "orderlyturn", "forces", "closed", "dat_o2")
+                                   if record.get(k) not in (None, "")}
+    answer.update({"sluzhbi": units, "grafici": result, "nyama_grafik_za_mesetsa": missing,
+                   "sluzhbi_bez_grafik": [u for u in units if u not in covered]})
+    change = start.replace(hour=SHIFT_START, minute=0, second=0)
+    if start >= change:
+        change += datetime.timedelta(days=1)
+    if end and end > change:   # the work went on after 08:00 – the next shift took over
+        later, later_missing = lookup(end)
+        answer["sled_smyanata_na_smenite"] = {"kam": fmt(end), "smyana_ot": fmt(change), "grafici": later,
+                                              "nyama_grafik_za_mesetsa": later_missing}
+    answer["belezhka"] = ("По утвърдения график. Размени и замествания, които не са нанесени в записания график, "
+                          "не се виждат; кои служители са изпратени на адреса графикът не казва.")
+    out(answer)
     return 0
 
 
@@ -817,6 +1009,33 @@ def cmd_proverka(a, store):
     return 1 if problems else 0
 
 
+def cmd_dopalni(a, store):
+    """Adds the snapshot (short name, position, rank) to the rows of a stored month that have none – for
+    months saved before it existed. Only people who are in the staff list today; nothing else changes."""
+    by_full = {norm(r["ime"]): r for r in roster()}
+    current = store.get(a.grafik, a.mesec)
+    if current is None:
+        raise Problem(f"Няма график „{a.grafik}“ за {a.mesec}")
+    doc = json.loads(current)
+    filled, without = [], []
+    for i, row in enumerate(doc["sluzhiteli"]):
+        if any(row.get(k) for k in SNAPSHOT):
+            continue
+        known = by_full.get(norm(row["ime"]))
+        if known:
+            doc["sluzhiteli"][i] = with_snapshot(row, known)
+            filled.append(row["ime"])
+        else:
+            without.append(row["ime"])
+    text = dump(doc)
+    written = bool(filled) and not a.dry_run
+    if written:
+        store.put(a.grafik, a.mesec, text)
+    out({"ok": True, "grafik": a.grafik, "mesec": a.mesec, "dopalneni": len(filled), "written": written,
+         "sha256": sha(text), "bez_danni": without})
+    return 0
+
+
 def cmd_mesec(a, store):
     doc = load_month(store, a.grafik, a.mesec)
     if doc is None:
@@ -861,6 +1080,14 @@ def main():
         if name == "praznichni":
             p.add_argument("--s-premesteni", action="store_true", help="брои и преместените почивни дни")
         p.set_defaults(fn=fn)
+    p = sub.add_parser("pri-proizshestvie", help="кой е бил на смяна при произшествие (ОЦ и службата)")
+    p.add_argument("--zapis", metavar="ФАЙЛ", help="записът на произшествието (JSON от fetch_incidents.py -o или от incidents)")
+    p.add_argument("--id", help="№ на произшествието в базата, когато във файла има няколко записа")
+    p.add_argument("--data", help="ГГГГ-ММ-ДД, когато няма запис")
+    p.add_argument("--chas", help="ЧЧ:ММ на сигнала, когато няма запис")
+    p.add_argument("--sluzhba", help="службата, когато няма запис – напр. „УПБЗН – Сторгозия“")
+    p.set_defaults(fn=cmd_pri_proizshestvie)
+
     p = sub.add_parser("praznitsi", help="официалните празници за година")
     p.add_argument("godina", type=int)
     p.add_argument("--s-premesteni", action="store_true", help="и преместените почивни дни")
@@ -869,6 +1096,12 @@ def main():
     p.add_argument("grafik")
     p.add_argument("mesec")
     p.set_defaults(fn=cmd_mesec)
+    p = sub.add_parser("dopalni", help="добавя длъжност и звание към редовете на стар запис на месец")
+    p.add_argument("grafik")
+    p.add_argument("mesec")
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(fn=cmd_dopalni)
+
     p = sub.add_parser("spisak", help="кои графици и месеци има")
     p.set_defaults(fn=cmd_spisak)
     p = sub.add_parser("proverka", help="проверява записаните месеци: каноничен вид, кодове, дни")

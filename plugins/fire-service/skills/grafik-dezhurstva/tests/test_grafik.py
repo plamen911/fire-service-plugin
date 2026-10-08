@@ -216,7 +216,8 @@ def test_without_roster(tmp, store):
     """A colleague with the connector has no staff list at hand: questions still work, an import asks for it."""
     code, r = js(store, "sluzhitel", "Иван Дъбов", "--mesec", "2026-10", env=NO_ROSTER)
     assert code == 0 and r["sluzhitel"] == "Иван Дъбов" and r["grafici"][0]["broi_dezhurstva"] == 7, r
-    assert "dlazhnost" not in r, r  # only what the schedule itself says
+    # what the schedule itself says: the position and rank kept in the month when it was saved
+    assert r["dlazhnost"] == "ИНСПЕКТОР IV степен" and r["zvanie"] == "Инспектор" and "podrazdelenie" not in r, r
     code, r = js(store, "na-data", "2026-10-04", "--grafik", "oc", env=NO_ROSTER)
     assert [p["ime_kratko"] for p in r["grafici"][0]["dezhurni"]] == ["Мариян Липов"], r
     code, r = js(store, "sluzhitel", "--az", env=NO_ROSTER)
@@ -358,6 +359,136 @@ def test_concurrent_save(tmp):
     print("  ok  concurrent save: the colleague's rows survive")
 
 
+def test_former_employee(tmp):
+    """Someone who has left is no longer in the staff list, but the months he worked still give his name,
+    position and rank – like everyone else's – because they were kept in the month when it was saved."""
+    store = os.path.join(tmp, "former")
+    for f in (OC, RS):
+        code, r = js(store, "import", f)
+        assert code == 0, r
+    saved = json.load(open(os.path.join(store, "rspbzn-pleven", "2026-10.json"), encoding="utf-8"))
+    row = saved["sluzhiteli"][0]
+    assert list(row)[:4] == ["ime", "ime_kratko", "dlazhnost", "zvanie"], list(row)
+    assert (row["ime_kratko"], row["dlazhnost"], row["zvanie"]) == \
+        ("Бранимир Елхов", "НАЧАЛНИК НА ДЕЖУРНА СМЯНА", "Младши експерт"), row
+
+    lines = open(STAFF, encoding="utf-8").read().splitlines(True)
+    gone = [l for l in lines if "Бранимир Христов Елхов" not in l and "Иван Георгиев Дъбов" not in l]
+    assert len(gone) == len(lines) - 2
+    later = os.path.join(tmp, "staff_later.csv")          # the staff list a year later: two people have left
+    open(later, "w", encoding="utf-8").writelines(gone)
+    env = dict(ENV, FIRE_SERVICE_STAFF_CSV=later)
+
+    code, r = js(store, "na-data", "2026-10-03", "--grafik", "rspbzn-pleven", env=env)
+    people = {p["ime_kratko"]: p for p in r["grafici"][0]["dezhurni"]}
+    left, stays = people["Бранимир Елхов"], people["Георги Малинов"]
+    assert left["dlazhnost"] == "НАЧАЛНИК НА ДЕЖУРНА СМЯНА" and left["zvanie"] == "Младши експерт", left
+    assert left["zveno"] == "РСПБЗН – Плевен" and left["ne_e_v_razpisanieto"] is True, left
+    assert "ne_e_v_razpisanieto" not in stays and stays["dlazhnost"] == "КОМАНДИР НА ЕКИП", stays
+
+    code, r = js(store, "sluzhitel", "Бранимир Елхов", "--mesec", "2026-10", env=env)   # asked about by name
+    assert code == 0 and r["sluzhitel"] == "Бранимир Елхов" and r["zvanie"] == "Младши експерт", r
+    assert r["ne_e_v_razpisanieto"] is True and r["grafici"][0]["broi_dezhurstva"] == 8, r
+    code, r = js(store, "praznichni", "Иван Дъбов", "--mesec", "2026-10", env=env)
+    assert code == 0 and r["sluzhitel"] == "Иван Дъбов", r
+    code, r = js(store, "sluzhitel", "Никой Никоев", "--mesec", "2026-10", env=env)
+    assert code == 2, r
+
+    # a later page of the same month, saved after he left, does not wipe what was kept about him
+    doc = json.load(open(RS, encoding="utf-8"))
+    code, r = js(store, "import", reading(tmp, "page2.json", dict(doc, redove=doc["redove"][1:3])), env=env)
+    assert code == 0 and not r["changed"], r
+    code, r = js(store, "import", RS, "--replace", env=env)      # … nor does his own page, read again
+    assert code == 0 and [u["ime"] for u in r["unmatched"]] == ["Бранимир Христов Елхов"], r
+    again = json.load(open(os.path.join(store, "rspbzn-pleven", "2026-10.json"), encoding="utf-8"))["sluzhiteli"][0]
+    assert again["zvanie"] == "Младши експерт" and again["v_razpisanieto"] is False, again
+    code, r = js(store, "import", RS, "--replace")               # back to the state the next checks expect
+    assert code == 0, r
+    # the position kept in the month wins over today's: a promotion later does not rewrite the past
+    promoted = os.path.join(tmp, "staff_promoted.csv")
+    open(promoted, "w", encoding="utf-8").write(
+        "".join(lines).replace("КОМАНДИР НА ЕКИП,КОМАНДИР НА ЕКИП,Младши експерт,Георги",
+                               "НАЧАЛНИК НА ДЕЖУРНА СМЯНА,НАЧАЛНИК НА ДЕЖУРНА СМЯНА,Инспектор,Георги"))
+    code, r = js(store, "na-data", "2026-10-03", "--grafik", "rspbzn-pleven", env=dict(ENV, FIRE_SERVICE_STAFF_CSV=promoted))
+    stays = [p for p in r["grafici"][0]["dezhurni"] if p["ime_kratko"] == "Георги Малинов"][0]
+    assert stays["dlazhnost"] == "КОМАНДИР НА ЕКИП" and stays["zvanie"] == "Младши експерт", stays
+
+    # a month saved before the snapshot existed: "dopalni" adds it while the people are still in the list
+    old = os.path.join(tmp, "old")
+    path = os.path.join(old, "rspbzn-pleven", "2026-10.json")
+    os.makedirs(os.path.dirname(path))
+    bare = dict(saved, sluzhiteli=[{k: v for k, v in x.items() if k not in ("ime_kratko", "dlazhnost", "zvanie")}
+                                   for x in saved["sluzhiteli"]])
+    sys.path.insert(0, os.path.dirname(SCRIPT))
+    import grafik
+    open(path, "w", encoding="utf-8").write(grafik.dump(bare))
+    code, r = js(old, "na-data", "2026-10-03", "--grafik", "rspbzn-pleven", env=env)    # nothing kept: the name stays
+    left = [p for p in r["grafici"][0]["dezhurni"] if p["ime"] == "Бранимир Христов Елхов"][0]
+    assert left["ime_kratko"] == "Бранимир Елхов" and "dlazhnost" not in left and left["ne_e_v_razpisanieto"], left
+    code, r = js(old, "dopalni", "rspbzn-pleven", "2026-10", "--dry-run")
+    assert code == 0 and r["dopalneni"] == 8 and not r["written"], r
+    code, r = js(old, "dopalni", "rspbzn-pleven", "2026-10")
+    assert code == 0 and r["written"] and open(path, encoding="utf-8").read() == grafik.dump(saved), r
+    code, r = js(old, "dopalni", "rspbzn-pleven", "2026-10")
+    assert code == 0 and r["dopalneni"] == 0 and not r["written"], r
+    code, r = js(old, "proverka")
+    assert code == 0 and r["ok"], r
+    print("  ok  former employee: name, position and rank stay in the months he worked")
+
+
+def test_incident(tmp):
+    """Who was on shift at an incident: the operations centre and the unit(s) of the record, at the hour of
+    the signal; a night signal belongs to the shift of the day before; a long one shows the next shift too."""
+    store = os.path.join(tmp, "incident")
+    for f in (OC, RS):
+        code, r = js(store, "import", f)
+        assert code == 0, r
+    rec = {"id": 77001, "num_event": 12, "dat": "2026-10-09 03:30:00", "casulaty": "пожар с преки материални загуби",
+           "unit": "У ПБЗН - Сторгозия", "location": "гр. Плевен", "object": "склад", "orderlyturn": "02 ДС",
+           "forces": "служ 8; 3 ПА; 1 - РС ПБЗН - Плевен; 2 - У ПБЗН - Сторгозия;", "closed": "2026-10-09 05:10:00"}
+    path = reading(tmp, "rec.json", [rec])
+    code, r = js(store, "pri-proizshestvie", "--zapis", path)
+    assert code == 0 and r["kam"] == "2026-10-09 03:30" and r["proizshestvie"]["orderlyturn"] == "02 ДС", r
+    assert r["sluzhbi"] == ["УПБЗН – Сторгозия", "РСПБЗН – Плевен"] and not r["sluzhbi_bez_grafik"], r
+    by = {g["grafik"]: g for g in r["grafici"]}
+    assert set(by) == {"oc", "rspbzn-pleven"}, by.keys()
+    rs = by["rspbzn-pleven"]                               # 03:30 on the 9th = the shift that began on the 8th
+    assert [(p["ime_kratko"], p["myasto"], p["ot"]) for p in rs["dezhurni"]] == \
+        [("Красимир Орехов", "УПБЗН – Сторгозия", "2026-10-08 08:00")], rs
+    assert [p["myasto"] for p in rs["dezhurni_v_drugi_zvena"]] == ["УПБЗН – Долна Митрополия"], rs
+    assert all(p["ot"] == "2026-10-08 08:00" for p in by["oc"]["dezhurni"]) and by["oc"]["dezhurni"], by["oc"]
+    assert "sled_smyanata_na_smenite" not in r and "график" in r["belezhka"], r
+
+    # the work went on after 08:00: the shift that took over is listed as well
+    code, r = js(store, "pri-proizshestvie", "--zapis", reading(tmp, "long.json", dict(rec, closed="2026-10-09 10:00:00",
+                                                                                      dat_o2="2026-10-09 11:15:00")))
+    later = r["sled_smyanata_na_smenite"]
+    assert later["kam"] == "2026-10-09 11:15" and later["smyana_ot"] == "2026-10-09 08:00", later
+    assert all(p["ot"] == "2026-10-09 08:00" for g in later["grafici"] for p in g["dezhurni"]), later
+
+    # a unit with no stored schedule: said, not guessed; the operations centre is still given
+    code, r = js(store, "pri-proizshestvie", "--zapis", reading(tmp, "lv.json", dict(rec, unit="РС ПБЗН - Левски",
+                                                                                    forces="служ 4; 1 ПА; 1 - РС ПБЗН - Левски;")))
+    assert r["sluzhbi_bez_grafik"] == ["РСПБЗН – Левски"] and [g["grafik"] for g in r["grafici"]] == ["oc"], r
+    code, r = js(store, "pri-proizshestvie", "--zapis", reading(tmp, "cb.json", dict(rec, unit="РС ПБЗН - Червен бряг", forces="")))
+    assert r["sluzhbi"] == ["РСПБЗН – Червен бряг"], r
+
+    # no record: date, hour and unit; several records in the file need --id; a month with no schedule is said
+    code, r = js(store, "pri-proizshestvie", "--data", "2026-10-04", "--chas", "14:00", "--sluzhba", "РСПБЗН – Плевен")
+    names = [p["ime_kratko"] for g in r["grafici"] if g["grafik"] == "rspbzn-pleven" for p in g["dezhurni"]]
+    assert code == 0 and names == ["Петър Къпинов"] and "proizshestvie" not in r, r
+    two = reading(tmp, "two.json", [rec, dict(rec, id=77002, dat="2026-10-12 21:00:00")])
+    code, r = js(store, "pri-proizshestvie", "--zapis", two)
+    assert code == 2 and "--id" in r["error"], r
+    code, r = js(store, "pri-proizshestvie", "--zapis", two, "--id", "77002")
+    assert code == 0 and r["kam"] == "2026-10-12 21:00", r
+    code, r = js(store, "pri-proizshestvie", "--zapis", reading(tmp, "old.json", dict(rec, dat="2025-03-02 10:00:00", closed="")))
+    assert code == 0 and set(r["nyama_grafik_za_mesetsa"]) == {"oc", "rspbzn-pleven"} and not r["grafici"], r
+    code, r = js(store, "pri-proizshestvie")
+    assert code == 2, r
+    print("  ok  incident: the shift at the hour of the signal, by unit")
+
+
 def test_conditional_save(tmp):
     """Through n8n the write is conditional: put sends the md5 that get saw ("new" when there was no file);
     on 409 CONFLICT the month is read again, merged again and saved with the fresh md5."""
@@ -426,6 +557,8 @@ def main():
         test_tiles(tmp)
         test_concurrent_save(tmp)
         test_conditional_save(tmp)
+        test_former_employee(tmp)
+        test_incident(tmp)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print("OK grafik-dezhurstva")
