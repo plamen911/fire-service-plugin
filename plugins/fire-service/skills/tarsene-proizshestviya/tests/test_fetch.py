@@ -111,6 +111,31 @@ def main():
     got, total = fetch_incidents.select(list(rows), a)
     check(len(got) == 3 and total == len(rows), "select: the limit cuts the list, total stays the full count")
 
+    # --place: the place is looked for in every field that may carry it
+    road = [
+        {"id": "1", "dat": "2026-10-08 22:45:00", "casulaty": "катастрофа с транспортни средства-12",
+         "location": "пътя Плевен-Ясен", "address": "пътя Плевен-Ясен", "object": "катастрофа между два автомобила"},
+        {"id": "2", "dat": "2026-10-09 02:14:00", "casulaty": "техническа помощ-13",
+         "location": "гр. Плевен ", "address": "гр. Плевен, пътя Плевен – Ясен", "object": "измиване на пътното платно след ПТП"},
+        {"id": "3", "dat": "2026-10-09 05:00:00", "casulaty": "техническа помощ-13",
+         "location": "гр. Плевен ", "address": "гр. Плевен, ж.к. Дружба", "object": "отваряне на врата"},
+        {"id": "4", "dat": "2026-10-09 06:00:00", "casulaty": "пожар без преки материални загуби-03",
+         "location": "с. Опанец", "address": None, "object": "суха трева край пътя за ЯСЕН"},
+    ]
+    a = fetch_incidents.parse_args(["--from", "2026-10-08", "--to", "2026-10-09", "--all", "--place", "Ясен"])
+    got, total = fetch_incidents.select([dict(r) for r in road], a)
+    check([r["id"] for r in got] == ["4", "2", "1"] and total == 3,
+          "--place finds the place in location, in the address and in the object, not only in location")
+    check({r["id"]: r["matched_in"] for r in got} == {"1": ["location", "address"], "2": ["address"], "4": ["object"]},
+          "… and every record says in which fields it was found")
+    a = fetch_incidents.parse_args(["2026-10-09", "--all", "--filter", "location=Ясен"])
+    got, _ = fetch_incidents.select([dict(r) for r in road], a)
+    check([r["id"] for r in got] == ["1"], "--filter location alone misses the follow-up call at the same place")
+    a = fetch_incidents.parse_args(["2026-10-09", "--all", "--place", "Ясен", "--place", "Дружба", "--filter", "casulaty=техническа"])
+    got, _ = fetch_incidents.select([dict(r) for r in road], a)
+    check([r["id"] for r in got] == ["3", "2"], "repeated --place = any of them; together with --filter = both must hold")
+    check(fetch_incidents.parse_args(["2026-10-09", "--place", "  "]).places == [], "an empty --place is dropped")
+
     # a list that was cut is marked beside the file, and the statistics say so
     with tempfile.TemporaryDirectory() as tmp:
         f = os.path.join(tmp, "rec.json")

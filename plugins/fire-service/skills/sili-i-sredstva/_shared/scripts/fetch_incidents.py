@@ -10,6 +10,7 @@ fetch_incidents.py — произшествия от базата pleven-fire-in
     python3 fetch_incidents.py --from 2026-09-01 --to 2026-09-24  # период (до 366 дни)
     python3 fetch_incidents.py 2026-09-24 --all --filter location=Опанец --filter object=кола
     python3 fetch_incidents.py 2026-09-24 --sort dat:asc --limit 20
+    python3 fetch_incidents.py --from 2026-10-08 --to 2026-10-09 --all --place Ясен   # място във всяко поле
     python3 fetch_incidents.py --from 2026-01-01 --to 2026-09-30 --all -o records.json
 
 Параметри (липсващ или празен параметър се пропуска):
@@ -17,6 +18,12 @@ fetch_incidents.py — произшествия от базата pleven-fire-in
     --all           всички видове произшествия, не само пожари с преки материални загуби
     --filter k=v    съдържа v (без значение от главни/малки букви); повторен за същото поле = ИЛИ,
                     за различни полета = И. Филтър и сортиране – по всяко поле на записа.
+    --place ТЕКСТ   място, търсено във ВСИЧКИ полета, които го носят: location, address, object,
+                    object_place, other_data (съдържа, без значение от главни/малки букви). Път, местност
+                    или село често стоят само в адреса или в обекта („гр. Плевен, пътя Плевен-Ясен“ е
+                    записано с location „гр. Плевен“) – --filter location=… ги изпуска. Повторен = ИЛИ;
+                    с --filter = И. Всеки намерен запис получава `matched_in` – в кои полета е намерено.
+                    Периодът се чете целият и се пресява тук; над 5000 записа → TOO_MANY_RECORDS.
     --sort f:dir    по подразбиране dat:desc — най-новите първи
     --limit N       по подразбиране 500, най-много 5000
     -o/--output F   записва масива във файла F (вход за други скриптове, напр. incident_stats.py),
@@ -32,6 +39,7 @@ fetch_incidents.py — произшествия от базата pleven-fire-in
 Грешки (на stderr, код ≠ 0):
     BAD_REQUEST: ...            — невалидна дата, период или поле за филтър
     N8N_UNAVAILABLE: ...        — n8n не отговаря или върна грешка → опитай веднъж отново
+    TOO_MANY_RECORDS: ...       — с --place: периодът има над 5000 записа → раздели го на по-къси части
 """
 import argparse
 import datetime as dt
@@ -43,6 +51,10 @@ import urllib.error
 import urllib.request
 
 FIRE = "пожар с преки материални загуби-01"
+# Fields that may carry the place of an incident. `location` alone is not enough: a road, a locality or
+# a village is often written only in the address or in the free-text object.
+PLACE_FIELDS = ("location", "address", "object", "object_place", "other_data")
+MAX_LIMIT = 5000
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import api_config  # noqa: E402  (addresses of n8n and the personal key)
 
@@ -54,6 +66,8 @@ def parse_args(argv=None):
     ap.add_argument("--to", dest="date_to", help="край на периода ГГГГ-ММ-ДД (по подразбиране = началото)")
     ap.add_argument("--all", action="store_true", help="всички видове произшествия")
     ap.add_argument("--filter", action="append", default=[], metavar="ПОЛЕ=СТОЙНОСТ")
+    ap.add_argument("--place", action="append", default=[], metavar="ТЕКСТ",
+                    help="място, търсено в location, address, object, object_place и other_data")
     ap.add_argument("--sort", default="dat:desc", help="поле:asc|desc (по подразбиране dat:desc)")
     ap.add_argument("--limit", type=int, default=500)
     ap.add_argument("-o", "--output", help="запиши масива в този файл; на stdout – само резюме")
@@ -87,13 +101,32 @@ def parse_args(argv=None):
     field, _, order = (a.sort or "dat:desc").partition(":")
     a.sort_field = field.strip() if re.fullmatch(r"[A-Za-z0-9_]+", field.strip()) else "dat"
     a.sort_order = "asc" if order.strip().lower() == "asc" else "desc"
-    a.limit = min(a.limit, 5000) if a.limit and a.limit > 0 else 500
+    a.limit = min(a.limit, MAX_LIMIT) if a.limit and a.limit > 0 else 500
+    a.places = [norm(p) for p in a.place if norm(p)]
     return a
 
 
+def norm(text):
+    """Lower case, with single spaces and the dashes unified – for comparing place names."""
+    text = re.sub(r"[‐-―−]", "-", str(text or "").lower())
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def by_place(rows, places):
+    """Records that name any of the places in any of PLACE_FIELDS, each marked with where it was found."""
+    out = []
+    for r in rows:
+        hit = [f for f in PLACE_FIELDS if any(p in norm(r.get(f)) for p in places)]
+        if hit:
+            out.append(dict(r, matched_in=hit))
+    return out
+
+
 def via_n8n(a):
+    # with --place the whole period is read and sifted here: the server joins filters on
+    # different fields with AND, and a place has to be looked for in several fields at once
     body = {"from": a.date_from, "to": a.date_to, "all": a.all, "filters": a.filters,
-            "sort": f"{a.sort_field}:{a.sort_order}", "limit": a.limit}
+            "sort": f"{a.sort_field}:{a.sort_order}", "limit": MAX_LIMIT if a.places else a.limit}
     try:
         res = api_config.post("url", body)
     except urllib.error.HTTPError as e:
@@ -104,7 +137,14 @@ def via_n8n(a):
         return select(res, a)
     if not isinstance(res, dict) or not isinstance(res.get("incidents"), list):
         sys.exit("N8N_UNAVAILABLE: unexpected response shape")
-    return res["incidents"], res.get("total", len(res["incidents"]))
+    rows, total = res["incidents"], res.get("total", len(res["incidents"]))
+    if not a.places:
+        return rows, total
+    if total > len(rows):
+        sys.exit(f"TOO_MANY_RECORDS: периодът има {total} записа, а се четат най-много {len(rows)} – "
+                 "раздели го на по-къси части и пусни --place за всяка")
+    rows = by_place(rows, a.places)
+    return rows[:a.limit], len(rows)
 
 
 def select(rows, a):
@@ -115,6 +155,8 @@ def select(rows, a):
         vals = [v.lower() for v in vals]
         rows = [r for r in rows
                 if str(r.get(k) or "") and any(v in str(r.get(k) or "").lower() for v in vals)]
+    if a.places:
+        rows = by_place(rows, a.places)
     rows.sort(key=lambda r: (str(r.get(a.sort_field) or ""), str(r.get("id") or "")),
               reverse=a.sort_order == "desc")
     return rows[:a.limit], len(rows)

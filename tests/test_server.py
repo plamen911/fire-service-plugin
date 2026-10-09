@@ -200,6 +200,21 @@ def test_search(tmp):
     code, out, err = call(fetch_incidents.main, ["2026-09-01", "-o", target])
     check(not os.path.exists(target + ".meta.json") and json.loads(out)["truncated"] is False, "a complete list removes the mark")
 
+    # --place: the whole period is asked for and sifted here; the place is not sent as a server filter
+    mixed = [dict(rows[0], id=1, location="гр. Плевен", address="гр. Плевен, пътя Плевен-Ясен"),
+             dict(rows[1], id=2, location="пътя Плевен-Ясен"), dict(rows[2], id=3)]
+    Stub.plan = [(200, {"incidents": mixed, "total": 3})]
+    code, out, err = call(fetch_incidents.main, ["2026-09-01", "--all", "--place", "Ясен", "--limit", "1", "-o", target])
+    body, summary = Stub.seen[-1]["body"], json.loads(out)
+    check(body["limit"] == 5000 and body["filters"] == {} and "place" not in body,
+          "--place asks the server for the whole period, without a place filter")
+    check(summary["returned"] == 1 and summary["total"] == 2 and summary["truncated"] is True,
+          "… the records are sifted locally, then cut by --limit; total is the number that matched")
+    check(json.load(open(target, encoding="utf-8"))[0]["matched_in"] == ["address"], "… and say where the place was found")
+    Stub.plan = [(200, {"incidents": mixed, "total": 9000})]
+    code, _, _ = call(fetch_incidents.main, ["2026-09-01", "--all", "--place", "Ясен"])
+    check(str(code).startswith("TOO_MANY_RECORDS"), "--place over a period the server cut → refused, not a silent partial search")
+
     other = dict(rows[0], id=9, casulaty="техническа помощ")
     Stub.plan = [(200, rows + [other])]                       # an older server answers with the bare list
     code, out, _ = call(fetch_incidents.main, ["2026-09-01", "--limit", "2"])
